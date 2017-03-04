@@ -17,17 +17,27 @@ function getTopTracks(accessToken, onSuccess, onError) {
   }); 
 }
 
+
+module.exports = {
+  getTopTracks : getTopTracks
+};
+
 /*
  * Example usage of getTopTracks()
  */
 function main() {
+  // Set request args
   accessToken =  '';
-  callback = function(data) {
+  onSuccess = function(data) {
     data.body.items.forEach(function(track, index) {
       console.log(track.name + " by " + track.artists[0].name);
     }); 
   }
-  getTopTracks(accessToken, callback);
+  onError = function(err) {
+    console.log(err);
+  }
+
+  getTopTracks(accessToken, onSuccess, onError);
 }
 
 if (require.main === module) {

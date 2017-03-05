@@ -5,6 +5,8 @@
   "author": "Pedram Pejman <pedrampejman2010@gmail.com>",
   "main": "server.js",
   "dependencies": {
-    "grpc": "^1.0.0"
+    "grpc": "^1.0.0",
+    "promise": "^7.1.1",
+    "spotify-web-api-node": "2.3.6"
   }
 }

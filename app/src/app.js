@@ -38,8 +38,8 @@ function getInitialJukeboxState(accessToken) {
             SEED_TRACKS : seedTracks,
             DEFAULT_PARAMS : defaultParams 
           };
-        }, errorHandler);
-    }, errorHandler);
+        }, bubbleUpError);
+    }, bubbleUpError);
 }
 
 /************** Spotify API Wrappers ****************/
@@ -134,10 +134,10 @@ function getSeedTracks(topTracksObj) {
 }
 
 /*
- * Generic error handler - should not be used in prod
+ * Bubble error to parent promise
  */
-function errorHandler(err) {
-  console.log(err);
+function bubbleUpError(err) {
+  return err;
 }
 
 /******************** Main Routines ********************/
@@ -151,9 +151,13 @@ module.exports = {
  */
 function main() {
   accessToken = ''; 
-  getInitialJukeboxState(accessToken).then(function(initialState){
+
+  getInitialJukeboxState(accessToken).
+    then(function(initialState){
     console.log(initialState);
-  }, errorHandler);
+  }, function(err){
+    console.log(err);
+  });
 }
 
 if (require.main === module) {

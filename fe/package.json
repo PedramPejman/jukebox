@@ -10,6 +10,7 @@
   "dependencies": {
     "express": "^4.13.3",
     "grpc": "^1.0.0",
+    "jade": "^1.11.0",
     "request": "^2.81.0"
   }
 }

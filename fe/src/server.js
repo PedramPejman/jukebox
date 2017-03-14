@@ -1,22 +1,46 @@
 var handler = require('./http_handler.js');
 
 var PORT = process.env.FE_HTTP_PORT || '8080';
+var IS_PROD = process.env.ENVIRONMENT == 'production';
 
 var express = require('express'),
     request = require('request'),
+    sassMiddleware = require('node-sass-middleware'),
     httpServer = express();
 
-// Set Environmental parameters
-httpServer.set('views', __dirname + '/views');
-httpServer.set('view engine', 'jade');
-httpServer.use(express.static('static/stylesheets'));
+var APP_ROOT = __dirname;
+var STATIC_ROOT = APP_ROOT + '/static';
+var VIEWS_ROOT = APP_ROOT + '/views';
+var STYLESHEETS_ROOT = STATIC_ROOT + '/stylesheets';
+var SASS_ROOT = STATIC_ROOT + '/sass';
+
+var TEMPLATE_ENGINE = 'jade';
+
+/****************** Server Configuration *******************/
+
+// Set views root path
+httpServer.set('views', VIEWS_ROOT);
+
+// Set template engine to jade
+httpServer.set('view engine', TEMPLATE_ENGINE);
+
+// Set up Sass middleware
+httpServer.use(sassMiddleware({
+    src: SASS_ROOT,
+    dest: STYLESHEETS_ROOT,
+    debug: !IS_PROD,
+    outputStyle: IS_PROD ? 'compressed' : 'extended'
+}));
+
+// Declare directories to look in for static files
+httpServer.use(express.static(STYLESHEETS_ROOT));
 
 // Bind to the specified port
 httpServer.listen(PORT, function () {
   console.log('Jukebox is running on port ' + PORT + '\n');
 });
 
-/**************** Endpoint Routes ****************/
+/******************** Endpoint Routes ********************/
 
 /*  
  * Handles HTTP.GET traffic on '/'
@@ -43,7 +67,7 @@ httpServer.get('/test-rpc', handler.testRpc);
  */
 httpServer.get('/test-view', handler.testView);
 
-/****************** Helpers **********************/
+/********************** Helpers **************************/
 
 /*
  * Logs error message and kills process

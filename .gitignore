@@ -4,3 +4,6 @@
 *node_modules*
 */protos
 *debug.log
+
+# Ignore compiled *.css
+fe/src/static/stylesheets/*

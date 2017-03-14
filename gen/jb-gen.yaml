@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: jb-gen
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: jb-gen
+    spec:
+      containers:
+        - image: pedrampejman/jb-gen
+          name: jb-gen
+          ports:
+          - containerPort: 35000
+            name: jb-gen-server

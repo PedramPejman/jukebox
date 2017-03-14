@@ -1,4 +1,5 @@
-var appClient = require('./app_client.js');
+var appClient = require('./app_client.js'),
+    request = require('request');
 
 var CLIENT_ID = process.env.CLIENT_ID || 'c99f31ef396d40ffb498f24d1803b17f',
     FE_HTTP_HOST = process.env.FE_HTTP_HOST || 'http://jukebox.life',
@@ -99,7 +100,7 @@ function fatal(message) {
  * Called in auth-callback 
  * Extracts access token and makes getInitialJikeboxState RPC
  */
-function getAccessCodeCallback(resp, error, response, body) {
+function getAccessCodeCallback(res, error, response, body) {
       if (!error && response.statusCode == 200) {
 
         // Retrieve access token

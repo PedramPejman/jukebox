@@ -1,39 +1,53 @@
 var mysql = require('mysql');
 
 var DB_USER = process.env.DB_USER || fatal("DB_USER not an environment variable");
-var PROXY_HOST = '127.0.0.1';
+var DB_PASS = process.env.DB_PASS || '';
+var DB_HOST = process.env.DB_HOST || '127.0.0.1';
 
 // Create a connection to the Mysql proxy server
 var con = mysql.createConnection({
-  host: PROXY_HOST,  // Using cloudsql-proxy
-  user: DB_USER      // From Kubernetes secrets
+  host: DB_HOST,     // cloudsql-proxy in prod
+  user: DB_USER,     // From Kubernetes secrets in prod
+  password: DB_PASS  // Null in prod
 });
 
 /****************** Exported routines *****************/
 
 /*
- * Connect to the database server
+ * Returns a promise which resolves to fulfilled if
+ * the connection to database is successful.
  */
 function connect() {
-  con.connect(function(err){
-    if(err){
-      console.log('Error connecting to Db: ' + err);
-      return;
-    }
-    console.log('Connection established');
+  return new Promise(function (fulfill, reject) {
+    con.connect(function(err){
+      if(err){
+        console.log('Error connecting to database: ' + err);
+        reject(err);
+      }
+      else {
+        console.log('Connection to database established');
+        fulfill();
+      }
+    });
   });
 }
 
 /*
- * Disconnect from the database server
+ * Returns a promise which resolves to fulfilled if
+ * the disconnect from database is successful.
  */
 function disconnect() {
-  con.end(function(err) {
-    if (err) {
-      console.log("Could not end connection: " + err);
-      return;
-    }
-    console.log("Ended connection");
+  return new Promise(function (fulfill, reject) {
+    con.end(function(err) {
+      if (err) {
+        console.log("Could not end database connection: " + err);
+        reject(err);
+      }
+      else {
+        console.log("Successfully ended database connection");
+        fulfill();
+      }
+    });
   });
 }
 

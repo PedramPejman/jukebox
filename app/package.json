@@ -11,6 +11,6 @@
     "spotify-web-api-node": "2.3.6"
   },
   "scripts": {
-    "start": "node src/server.js"
+    "start" : "node src/server.js"
   }
 }

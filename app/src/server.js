@@ -7,7 +7,6 @@ var HOST = '0.0.0.0';
 var grpc = require('grpc');
 var proto = grpc.load(PROTO_PATH).app;
 
-
 /**************** AppService RPC methods  *****************/
 
 /*
@@ -39,7 +38,8 @@ function shake(call, callback) {
 /************************ Main methods **************************/
 
 
-/* Starts an RPC server that receives requests for the Handshake service at the
+/* 
+ * Starts an RPC server that receives requests for the Handshake service at the
  * specified port
  */
 function main() {

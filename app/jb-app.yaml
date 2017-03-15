@@ -9,9 +9,45 @@ spec:
       labels:
         name: jb-app
     spec:
+      # [START containers]
       containers:
+        # [START app_container]
         - image: pedrampejman/jb-app
           name: jb-app
+          env:
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql
+                  key: username
           ports:
-          - containerPort: 34000
-            name: jb-app-server
+            - containerPort: 34000
+              name: jb-app-server
+        # [END app_container]
+        # [START proxy_container]
+        - image: b.gcr.io/cloudsql-docker/gce-proxy:1.05
+          name: cloudsql-proxy
+          command: ["/cloud_sql_proxy", "--dir=/cloudsql",
+                    "-instances=jukebox-161404:us-east1:dev=tcp:3306",
+                    "-credential_file=/secrets/cloudsql/credentials.json"]
+          volumeMounts:
+            - name: cloudsql-oauth-credentials
+              mountPath: /secrets/cloudsql
+              readOnly: true
+            - name: ssl-certs
+              mountPath: /etc/ssl/certs
+            - name: cloudsql
+              mountPath: /cloudsql
+        # [END proxy_container]
+      # [END containers]
+      # [START volumes]
+      volumes:
+        - name: cloudsql-oauth-credentials
+          secret:
+            secretName: cloudsql-oauth-credentials
+        - name: ssl-certs
+          hostPath:
+            path: /etc/ssl/certs
+        - name: cloudsql
+          emptyDir:
+      # [END volumes]

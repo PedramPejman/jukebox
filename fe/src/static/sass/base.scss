@@ -1,7 +1,53 @@
-$font-stack:    Helvetica, sans-serif;
+/***********************************************
+			DEFAULT STYLES
+***********************************************/
+
+@import url('https://fonts.googleapis.com/css?family=Montserrat');
+$font-stack: 'Montserrat', Helvetica, sans-serif;
+
+$dark-black: rgb(15, 15, 15);
+$light-black: rgb(22, 22, 22);
+$green: rgb(24, 177, 62);
 $primary-color: #333;
 
 body {
-  font: 100% $font-stack;
-  color: $primary-color;
+	margin: 0;
+	background-color: $dark-black;
+	font: 100% $font-stack;
+	font-weight: lighter;
+	color: $primary-color;
+}
+
+.main-container {
+	width: 100%;
+}
+
+.title {
+	text-align: center;
+	color: white;
+	font-size: 54px;
+	padding: 50px 0;
+}
+
+.row {
+	max-width: 80%;
+	margin: 0 auto;
+	background-color: $light-black;
+}
+
+.col {
+	width: 50%;
+	display: inline-block;
+	height: 100px;
+	color: white;
+	text-align: center;
+	padding-top: 30px;
+}
+
+/* 			MOBILE 				*/
+@media screen and (max-width: 500px) {
+	.col {
+		width: 100%;
+		height: 500px;
+	}
 }

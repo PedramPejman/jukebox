@@ -67,6 +67,13 @@ httpServer.get('/test-rpc', handler.testRpc);
  */
 httpServer.get('/test-view', handler.testView);
 
+/*
+ * Handles HTTP GET traffic on '/home-view'
+ * Returns the home HTML page
+ */
+httpServer.get('/home-view', handler.homeView);
+
+
 /********************** Helpers **************************/
 
 /*

@@ -87,7 +87,7 @@ exports.testView = function(req, res) {
 };
 
 /*
- * Returns a home HTML page
+ * Returns application home page
  */
 exports.homeView = function(req, res) {
   console.log("Serving home page");

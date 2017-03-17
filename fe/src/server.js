@@ -69,7 +69,7 @@ httpServer.get('/test-view', handler.testView);
 
 /*
  * Handles HTTP GET traffic on '/home-view'
- * Returns the home HTML page
+ * Returns application home page
  */
 httpServer.get('/home-view', handler.homeView);
 

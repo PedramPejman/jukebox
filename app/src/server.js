@@ -13,12 +13,30 @@ var proto = grpc.load(PROTO_PATH).app;
  * Implements the GetInitialJukeboxState RPC method
  */
 function getInitialJukeboxState(call, callback) {
-  console.log('Received request with access token : '
+  console.log('Received GetInitialJukeboxState RPC with access token : '
       + call.request.access_token);
+
   app.getInitialJukeboxState(call.request.access_token).
     then(function(initialState) {
       console.log(initialState);
       callback(null, initialState);
+    }, function(err) {
+      console.log(err);
+      callback(err, null);
+    }); 
+}  
+
+/*
+ * Implements the RegisterUser RPC method
+ */
+function registerUser(call, callback) {
+  console.log('Received RegisterUser RPC with access token : '
+      + call.request.access_token);
+
+  app.registerUser(call.request.access_token).
+    then(function(response) {
+      console.log(response);
+      callback(null, response);
     }, function(err) {
       console.log(err);
       callback(err, null);
@@ -49,7 +67,10 @@ function main() {
 
   // Register RPC services
   server.addProtoService(proto.HandshakeService.service, {shake: shake});
-  server.addProtoService(proto.AppService.service, {getInitialJukeboxState: getInitialJukeboxState});
+  server.addProtoService(proto.AppService.service, {
+    getInitialJukeboxState: getInitialJukeboxState,
+    registerUser: registerUser
+      });
 
   // Bind server to host address and start server 
   server.bind(HOST + ":" + PORT, grpc.ServerCredentials.createInsecure());

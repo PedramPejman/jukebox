@@ -9,6 +9,7 @@ package app;
  */
 service AppService {
   rpc GetInitialJukeboxState(AuthCreds) returns (InitialJukeboxState) {}
+  rpc RegisterUser(AuthCreds) returns (GenResponse) {}
 }
 
 /*
@@ -46,6 +47,14 @@ message DefaultParams {
   float energy = 3;
   float tempo = 4;
   float valence = 5; 
+}
+
+/*
+ * Represents generic RPC response with optional error;
+ */
+message GenResponse {
+  string message = 1;
+  bool error = 2;
 }
 
 /********************* HandshakeService Entities *********************/

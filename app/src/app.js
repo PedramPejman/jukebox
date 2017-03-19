@@ -1,3 +1,5 @@
+var db = require('./db.js');
+
 var SpotifyWebApi = require('spotify-web-api-node');
 
 /****************** Constants *******************/
@@ -42,6 +44,21 @@ function getInitialJukeboxState(accessToken) {
     }, getEmptyInitialJukeboxState);
 }
 
+/*
+ * Registers the user by adding them to DB.user.
+ * Returns a promise containing a GenResponse object
+ * with format {message, error}
+ */
+function registerUser(accessToken) {
+  return getMe(accessToken).
+    then(function(userObject) {
+      id = userObject['body']['id'];
+      return db.addUser(id, accessToken);
+    }, function(error) {
+      reject(error);
+    });
+}
+
 /************** Spotify API Wrappers ****************/
 
 /*
@@ -67,6 +84,18 @@ function getAudioFeatures(accessToken, trackIds) {
 
   // Return audio features wrapped in a promise
   return spotifyApi.getAudioFeaturesForTracks(trackIds);
+}
+
+/*
+ * Returns a promise containing json-encoded User object
+ */
+function getMe(accessToken) {
+  // Instatiate api instance and set its accessToken
+  var spotifyApi = new SpotifyWebApi();
+  spotifyApi.setAccessToken(accessToken);
+
+  // Return audio features wrapped in a promise
+  return spotifyApi.getMe();
 }
 
 /****************** Helpers ********************/
@@ -153,20 +182,33 @@ function getEmptyInitialJukeboxState(error) {
 
 module.exports = {
   getInitialJukeboxState: getInitialJukeboxState,
+  registerUser: registerUser
 };
 
 /*
- * Example usage of getInitialJukeboxState()
+ * Example usage of exported functions
  */
 function main() {
-  accessToken = ''; 
+  
+  // Set access token for example calls
+  accessToken = 'BQAfvcgsmDe2TbUih5uhBe3P8LJew-0PKTrUUIdEnzWIA0SzYnlRCRJf8r4Cd9WjEzzFKX2-hHVLjujeNetd3b-5cIyjEetBajjFlGlT3tCiD98LtJUFimklxUbm36f39mVeJq70hSElUfWOsHT82A';
 
-  getInitialJukeboxState(accessToken).
-    then(function(initialState){
-    console.log(initialState);
-  }, function(err){
-    console.log(err);
-  });
+  // Template callback
+  callback = function(message) {
+    if (message) console.log(message);
+  }
+  
+  // Example usage of getInitialJukeboxState
+  getInitialJukeboxState(accessToken).then(callback, callback);
+  
+  // Example usage of registerUser 
+  db.connect();
+  registerUser(accessToken).
+    then(function(response) {
+      console.log("User registered");
+      db.disconnect();
+  }, callback);
+
 }
 
 if (require.main === module) {

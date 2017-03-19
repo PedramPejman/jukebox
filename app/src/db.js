@@ -5,13 +5,8 @@ var DB_PASS = process.env.DB_PASS || 'jukebox';
 var DB_HOST = process.env.DB_HOST || '127.0.0.1';
 var DB_NAME = process.env.DB_NAME || 'jb_dev';
 
-// Create a connection to the Mysql proxy server
-var con = mysql.createConnection({
-  host: DB_HOST,      // cloudsql-proxy in prod
-  user: DB_USER,      // From Kubernetes secrets in prod
-  password: DB_PASS,  // Null in prod
-  database: DB_NAME   // jb_prod in prod
-});
+// Create a global reference for the lazy connection to proxy server
+var con;
 
 /****************** Exported routines *****************/
 
@@ -21,6 +16,16 @@ var con = mysql.createConnection({
  */
 function connect() {
   return new Promise(function (fulfill, reject) {
+
+    // Create a lazy connection object
+    con = mysql.createConnection({
+      host: DB_HOST,      // cloudsql-proxy in prod
+      user: DB_USER,      // From Kubernetes secrets in prod
+      password: DB_PASS,  // Null in prod
+      database: DB_NAME   // jb_prod in prod
+    });
+
+    // Explicitly make the connection
     con.connect(function(err){
       if(err){
         console.log('Error connecting to database: ' + err);
@@ -40,6 +45,11 @@ function connect() {
  */
 function disconnect() {
   return new Promise(function (fulfill, reject) {
+
+    // Ensure connection exists
+    if (!con) reject("Not connected to DB.");
+    
+    // Make disconnect call
     con.end(function(err) {
       if (err) {
         console.log("Could not end database connection: " + err);
@@ -59,6 +69,11 @@ function disconnect() {
  */
 function addUser(userId, accessToken) {
   return new Promise(function (fulfill, reject) {
+    
+    // Ensure connection exists
+    if (!con) reject("Not connected to DB.");
+
+    // Execute the query and transition promise state
     con.query('INSERT INTO `user` (`id`, `access_token`) VALUES (?, ?)',
         [userId, accessToken], function(error, results, fields) {
           if (error) {
@@ -76,6 +91,11 @@ function addUser(userId, accessToken) {
  */
 function getUser(accessToken) {
   return new Promise(function (fulfill, reject) {
+    
+    // Ensure connection exists
+    if (!con) reject("Not connected to DB.");
+
+    // Execute the query and transition promise state
     con.query('SELECT `id` FROM `user` WHERE `access_token` = ?', 
         [accessToken], function(error, results, fields) {
           if (error) {
@@ -105,7 +125,8 @@ function main() {
   }
 
   // Establish connection
-  connect();
+  connect().
+    then(callback, callback);
 
   // Example usage of addUser()
   addUser("user1", "token1").
@@ -116,7 +137,8 @@ function main() {
     .then(callback, callback);
 
   // Terminate connection
-  disconnect();
+  disconnect().
+    then(callback, callback);
 }
 
 /*

@@ -11,14 +11,21 @@ var appClient = new proto.AppService(HOST + ":" + PORT,
     grpc.credentials.createInsecure());
 
 /*
- * Stub for the RPC client
+ * Stub for the GetInitialJukeboxState RPC call
  */
-function getInitialJukeboxState(token, callback) {
-  appClient.getInitialJukeboxState({access_token: token}, callback);
+function getInitialJukeboxState(accessToken, callback) {
+  appClient.getInitialJukeboxState({access_token: accessToken}, callback);
 }
 
 /*
- * Stub for the RPC client
+ * Stub for the RegisterUser RPC call
+ */
+function registerUser(accessToken, callback) {
+  appClient.registerUser({access_token: accessToken}, callback);
+}
+
+/*
+ * Stub for the Shake RPC call
  */
 function shake(user, callback) {
   handshakeClient.shake({name: user}, callback);
@@ -29,7 +36,8 @@ function shake(user, callback) {
  */
 module.exports = {
   shake: shake,
-  getInitialJukeboxState: getInitialJukeboxState
+  getInitialJukeboxState: getInitialJukeboxState,
+  registerUser: registerUser
 };
 
 /*

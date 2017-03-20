@@ -24,7 +24,7 @@ var pool = mysql.createConnection({
 function connect() {
   return new Promise(function (fulfill, reject) {
     // TODO: require all clients to explicitly connect
-    fulfill();
+    return fulfill();
   });
 }
 
@@ -36,17 +36,17 @@ function disconnect() {
   return new Promise(function (fulfill, reject) {
 
     // Ensure connection pool exists
-    if (!pool) reject("Not connected to DB.");
+    if (!pool) return reject("Not connected to DB.");
     
     // Make disconnect call
     pool.end(function(err) {
       if (err) {
         console.log("Could not end database connection pool: " + err);
-        reject(err);
+        return reject(err);
       }
       else {
         console.log("Successfully ended database connection");
-        fulfill();
+        return fulfill();
       }
     });
   });
@@ -60,17 +60,35 @@ function addUser(userId, accessToken) {
   return new Promise(function (fulfill, reject) {
     
     // Ensure connection exists
-    if (!pool) reject("Not connected to DB.");
+    if (!pool) return reject("Not connected to DB.");
 
-    // Execute the query and transition promise state
-    pool.query('INSERT INTO `user` (`id`, `access_token`) VALUES (?, ?)',
-        [userId, accessToken], function(error, results, fields) {
-          if (error) {
-            console.log("unable to add user %s with access token %s", userId, accessToken);
-            reject(error);
+    // Check if user exists
+    pool.query('SELECT * FROM `user` WHERE `id` = ?',
+        [userId], function(error, results, fields) {
+          if (results) {
+
+            // Execute query for updating existing user and transition promise state
+            pool.query('UPDATE `user` SET `access_token`=? WHERE `id` = ?',
+                [accessToken, userId], function(error, results, fields) {
+                  if (error) {
+                    console.log("unable to update user %s with access token %s", userId, accessToken);
+                    return reject(error);
+                  }
+                  return fulfill("User " + userId + " updated");
+            });
+          } else { 
+            
+            // Execute query for adding new user and transition promise state
+            pool.query('INSERT INTO `user` (`id`, `access_token`) VALUES (?, ?)',
+                [userId, accessToken], function(error, results, fields) {
+                  if (error) {
+                    console.log("unable to add user %s with access token %s", userId, accessToken);
+                    return reject(error);
+                  }
+                  return fulfill("User " + userId + " added");
+            });
           }
-          fulfill("User added");
-        });
+    });
   });
 }
 
@@ -82,16 +100,16 @@ function getUser(accessToken) {
   return new Promise(function (fulfill, reject) {
     
     // Ensure connection exists
-    if (!pool) reject("Not connected to DB.");
+    if (!pool) return reject("Not connected to DB.");
 
     // Execute the query and transition promise state
     pool.query('SELECT `id` FROM `user` WHERE `access_token` = ?', 
         [accessToken], function(error, results, fields) {
-          if (error) {
+          if (results === undefined || results.length == 0) {
             console.log("unable to find user with access token %s", accessToken);
-            reject(error);
+            return reject(error);
           }
-          fulfill(results[0]['id']);
+          return fulfill(results[0]['id']);
         });
   });
 }
@@ -114,21 +132,20 @@ function main() {
     if (message) console.log(message);
   }
 
+  // Define disconnect callback
+  disconnectCB = function(message) {
+    callback(message);
+    disconnect();
+  }
+
   // Establish connection
-  connect().
-    then(callback, callback);
+  connect().then(callback, callback);
 
   // Example usage of addUser()
-  addUser("user1", "token1").
-    then(callback, callback);
+  addUser("user1", "token1").then(callback, callback);
 
   // Example usage of getUser()
-  getUser("token1")
-    .then(callback, callback);
-
-  // Terminate connection
-  disconnect().
-    then(callback, callback);
+  getUser("token1").then(disconnectCB, disconnectCB);
 }
 
 /*

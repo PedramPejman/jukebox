@@ -76,7 +76,7 @@ function main() {
   server.addProtoService(proto.AppService.service, {
     getInitialJukeboxState: getInitialJukeboxState,
     registerUser: registerUser
-      });
+  });
 
   // Bind server to host address and start server 
   server.bind(HOST + ":" + PORT, grpc.ServerCredentials.createInsecure());

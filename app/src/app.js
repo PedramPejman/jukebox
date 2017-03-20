@@ -187,7 +187,7 @@ module.exports = {
 };
 
 /*
- * Example usage of exported functions
+ * Example usage of exported routines
  */
 function main() {
   

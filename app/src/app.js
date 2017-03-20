@@ -41,22 +41,23 @@ function getInitialJukeboxState(accessToken) {
             [DEFAULT_PARAMS] : defaultParams 
           };
         }, bubbleUpError);
-    }, getEmptyInitialJukeboxState);
+    }, bubbleUpError);
 }
 
 /*
  * Registers the user by adding them to DB.user.
- * Returns a promise containing a GenResponse object
- * with format {message, error}
+ * Returns a promise containing a 
  */
 function registerUser(accessToken) {
+
+  // Connect to the DB
+  db.connect();
+
   return getMe(accessToken).
     then(function(userObject) {
       id = userObject['body']['id'];
       return db.addUser(id, accessToken);
-    }, function(error) {
-      reject(error);
-    });
+    }, bubbleUpError);
 }
 
 /************** Spotify API Wrappers ****************/
@@ -162,7 +163,7 @@ function getSeedTracks(topTracksObj) {
  * Bubbles error to parent promise
  */
 function bubbleUpError(err) {
-  return err;
+  throw new Error(err);
 }
 
 /*
@@ -191,7 +192,7 @@ module.exports = {
 function main() {
   
   // Set access token for example calls
-  accessToken = 'BQAfvcgsmDe2TbUih5uhBe3P8LJew-0PKTrUUIdEnzWIA0SzYnlRCRJf8r4Cd9WjEzzFKX2-hHVLjujeNetd3b-5cIyjEetBajjFlGlT3tCiD98LtJUFimklxUbm36f39mVeJq70hSElUfWOsHT82A';
+  accessToken = ''; 
 
   // Template callback
   callback = function(message) {
@@ -202,12 +203,7 @@ function main() {
   getInitialJukeboxState(accessToken).then(callback, callback);
   
   // Example usage of registerUser 
-  db.connect();
-  registerUser(accessToken).
-    then(function(response) {
-      console.log("User registered");
-      db.disconnect();
-  }, callback);
+  registerUser(accessToken).then(callback, callback);
 
 }
 

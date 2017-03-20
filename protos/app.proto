@@ -50,11 +50,10 @@ message DefaultParams {
 }
 
 /*
- * Represents generic RPC response with optional error;
+ * Represents generic RPC response with optional message;
  */
 message GenResponse {
   string message = 1;
-  bool error = 2;
 }
 
 /********************* HandshakeService Entities *********************/

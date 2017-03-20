@@ -41,17 +41,25 @@ module.exports = {
 };
 
 /*
- * Example usage of getInitialJukeboxState call
+ * Example usage of RPC calls
  */
 function main() {
   console.log("Contacting " + HOST + ":" + PORT);
 
-  var access_token = "";
+  // Set access token for example requests
+  access_token = ''; 
+  
+  // Create template callback
+  callback = function(err, resp) {
+    if (err) console.log("Call did not succeed: " + err);
+    else console.log("Call succeeded: " + JSON.stringify(resp));
+  };
 
-  getInitialJukeboxState(access_token, function(err, resp) {
-    if (err) console.log("GetInitialJukeboxState did not succeed: " + err);
-    else console.log("GetInitialJukeboxState succeeded: " + JSON.stringify(resp));
-  });
+  // Example usage of registerUser()
+  registerUser(access_token, callback);
+
+  // Example usage of getInitialJukeboxState()
+  getInitialJukeboxState(access_token, callback);
 }
 
 if (require.main === module) main();

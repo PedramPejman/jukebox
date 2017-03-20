@@ -4,9 +4,16 @@ var DB_USER = process.env.DB_USER || 'ubuntu';
 var DB_PASS = process.env.DB_PASS || 'jukebox';
 var DB_HOST = process.env.DB_HOST || '127.0.0.1';
 var DB_NAME = process.env.DB_NAME || 'jb_dev';
+var DB_POOL = process.env.DB_POOL || 8;
 
-// Create a global reference for the lazy connection to proxy server
-var con;
+// Create a global reference for the connection pool to the proxy server
+var pool = mysql.createConnection({
+  connection_limit: DB_POOL,      // 32 in prod
+  host: DB_HOST,                  // cloudsql-proxy in prod
+  user: DB_USER,                  // From Kubernetes secrets in prod
+  password: DB_PASS,              // Null in prod
+  database: DB_NAME               // jb_prod in prod
+});
 
 /****************** Exported routines *****************/
 
@@ -16,26 +23,8 @@ var con;
  */
 function connect() {
   return new Promise(function (fulfill, reject) {
-
-    // Create a lazy connection object
-    con = mysql.createConnection({
-      host: DB_HOST,      // cloudsql-proxy in prod
-      user: DB_USER,      // From Kubernetes secrets in prod
-      password: DB_PASS,  // Null in prod
-      database: DB_NAME   // jb_prod in prod
-    });
-
-    // Explicitly make the connection
-    con.connect(function(err){
-      if(err){
-        console.log('Error connecting to database: ' + err);
-        reject(err);
-      }
-      else {
-        console.log('Connection to database established');
-        fulfill();
-      }
-    });
+    // TODO: require all clients to explicitly connect
+    fulfill();
   });
 }
 
@@ -46,13 +35,13 @@ function connect() {
 function disconnect() {
   return new Promise(function (fulfill, reject) {
 
-    // Ensure connection exists
-    if (!con) reject("Not connected to DB.");
+    // Ensure connection pool exists
+    if (!pool) reject("Not connected to DB.");
     
     // Make disconnect call
-    con.end(function(err) {
+    pool.end(function(err) {
       if (err) {
-        console.log("Could not end database connection: " + err);
+        console.log("Could not end database connection pool: " + err);
         reject(err);
       }
       else {
@@ -71,16 +60,16 @@ function addUser(userId, accessToken) {
   return new Promise(function (fulfill, reject) {
     
     // Ensure connection exists
-    if (!con) reject("Not connected to DB.");
+    if (!pool) reject("Not connected to DB.");
 
     // Execute the query and transition promise state
-    con.query('INSERT INTO `user` (`id`, `access_token`) VALUES (?, ?)',
+    pool.query('INSERT INTO `user` (`id`, `access_token`) VALUES (?, ?)',
         [userId, accessToken], function(error, results, fields) {
           if (error) {
             console.log("unable to add user %s with access token %s", userId, accessToken);
             reject(error);
           }
-          fulfill();
+          fulfill("User added");
         });
   });
 }
@@ -93,10 +82,10 @@ function getUser(accessToken) {
   return new Promise(function (fulfill, reject) {
     
     // Ensure connection exists
-    if (!con) reject("Not connected to DB.");
+    if (!pool) reject("Not connected to DB.");
 
     // Execute the query and transition promise state
-    con.query('SELECT `id` FROM `user` WHERE `access_token` = ?', 
+    pool.query('SELECT `id` FROM `user` WHERE `access_token` = ?', 
         [accessToken], function(error, results, fields) {
           if (error) {
             console.log("unable to find user with access token %s", accessToken);
@@ -112,7 +101,8 @@ function getUser(accessToken) {
 module.exports = {
   connect: connect,
   disconnect: disconnect,
-  addUser: addUser
+  addUser: addUser,
+  getUser: getUser
 };
 
 /* 

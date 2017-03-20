@@ -36,10 +36,16 @@ function registerUser(call, callback) {
   app.registerUser(call.request.access_token).
     then(function(response) {
       console.log(response);
-      callback(null, response);
+      callback(null, {message: response});
     }, function(err) {
       console.log(err);
-      callback(err, null);
+      try{
+        callback(err, null);
+      } catch(e) {
+        console.log(e);
+        // Because of bug in gRPC implementation cannot marshall error object
+        callback(1, null);
+      }
     }); 
 }  
 

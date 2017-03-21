@@ -1,3 +1,5 @@
+var app = require('./app.js');
+
 var mysql = require('mysql');
 
 var DB_USER = process.env.DB_USER || 'ubuntu';
@@ -65,13 +67,13 @@ function addUser(userId, accessToken) {
     // Check if user exists
     pool.query('SELECT * FROM `user` WHERE `id` = ?',
         [userId], function(error, results, fields) {
-          if (results) {
+          if (results && results.length > 0) {
 
             // Execute query for updating existing user and transition promise state
             pool.query('UPDATE `user` SET `access_token`=? WHERE `id` = ?',
                 [accessToken, userId], function(error, results, fields) {
                   if (error) {
-                    console.log("unable to update user %s with access token %s", userId, accessToken);
+                    console.log("Unable to update user %s with access token %s", userId, accessToken);
                     return reject(error);
                   }
                   return fulfill("User " + userId + " updated");
@@ -82,7 +84,7 @@ function addUser(userId, accessToken) {
             pool.query('INSERT INTO `user` (`id`, `access_token`) VALUES (?, ?)',
                 [userId, accessToken], function(error, results, fields) {
                   if (error) {
-                    console.log("unable to add user %s with access token %s", userId, accessToken);
+                    console.log("Unable to add user %s with access token %s", userId, accessToken);
                     return reject(error);
                   }
                   return fulfill("User " + userId + " added");
@@ -106,7 +108,7 @@ function getUser(accessToken) {
     pool.query('SELECT `id` FROM `user` WHERE `access_token` = ?', 
         [accessToken], function(error, results, fields) {
           if (results === undefined || results.length == 0) {
-            console.log("unable to find user with access token %s", accessToken);
+            console.log("Unable to find user with access token %s", accessToken);
             return reject(error);
           }
           return fulfill(results[0]['id']);
@@ -114,13 +116,75 @@ function getUser(accessToken) {
   });
 }
 
+/*
+ * Adds the given track to the user's top tracks and 
+ * records the track's audio feature parameters.
+ * Returns a promise which resolves to fulfilled if
+ * the insertion is successful.
+ */
+function addTopTrack(userId, trackUri, features) {
+  return new Promise(function (fulfill, reject) {
+    
+    // Ensure connection exists
+    if (!pool) return reject("Not connected to DB.");
+
+    // Use a transaction as the two insertions must be atomic 
+    pool.beginTransaction(function(err){
+      // Reject if we can't begin transaction
+      if (err) return reject(err);
+
+      // Execute query for adding new TopTrack and transition promise state
+      pool.query('INSERT INTO `top_track` (`user_id`, `track_uri`) VALUES (?, ?)',
+          [userId, trackUri], function(error, results, fields) {
+            
+            // Rollback first insert if unsuccessful
+            if (error) {
+                return pool.rollback(function() {
+                  console.log("Unable to add top track %s for user %s", trackUri, userId);
+                  return reject(error);
+              });
+            }
+
+            // Execute query for adding new TrackFeatures and transition promise state
+            pool.query('INSERT INTO `track_features` (`track_uri`, `acousticness`, `danceability`, `energy`, `tempo`, `valence`) VALUES (?, ?, ?, ?, ?, ?)',
+                [trackUri, features[app.ACOUSTICNESS], features[app.DANCEABILITY], features[app.ENERGY], 
+                 features[app.TEMPO], features[app.VALENCE]], function(error, results, fields) {
+                  
+                  // Rollback first insert if unsuccessful
+                  if (error) {
+                      return pool.rollback(function() {
+                        console.log("Unable to add track features for track %s", trackUri);
+                        return reject(error);
+                    });
+                  }
+
+                  // Commit both queries
+                  pool.commit(function(err) {
+                    if (err) {
+                      return pool.rollback(function() {
+                        console.log("Unable to add top track %s for user %s", trackUri, userId);
+                        return reject(err);
+                      });
+                    }
+
+                    console.log("Track " + trackUri + " added for user " + userId);
+                    return fulfill("Track " + trackUri + " added for user " + userId);
+                  });
+            });
+
+      });
+    });
+
+  });
+}
 /******************** Helpers *********************/
 
 module.exports = {
   connect: connect,
   disconnect: disconnect,
   addUser: addUser,
-  getUser: getUser
+  getUser: getUser,
+  addTopTrack: addTopTrack
 };
 
 /* 
@@ -142,10 +206,14 @@ function main() {
   connect().then(callback, callback);
 
   // Example usage of addUser()
-  addUser("user1", "token1").then(callback, callback);
+  //addUser("user1", "token1").then(callback, callback);
 
   // Example usage of getUser()
-  getUser("token1").then(disconnectCB, disconnectCB);
+  //getUser("token1").then(disconnectCB, disconnectCB);
+
+  features = {[app.ACOUSTICNESS]: 0.3, [app.DANCEABILITY]: 0.5, 
+    [app.ENERGY]: 0.8, [app.TEMPO]: 113.4, [app.VALENCE]: 0.8};
+  addTopTrack("user1", "track-rui", features).then(disconnectCB, disconnectCB);
 }
 
 /*

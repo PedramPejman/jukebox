@@ -182,6 +182,14 @@ function getEmptyInitialJukeboxState(error) {
 /******************** Main Routines ********************/
 
 module.exports = {
+  // Constants
+  ACOUSTICNESS: AUDIO_FEATURE_ACOUSTICNESS,
+  DANCEABILITY: AUDIO_FEATURE_DANCEABILITY,
+  ENERGY: AUDIO_FEATURE_ENERGY,
+  TEMPO: AUDIO_FEATURE_TEMPO,
+  VALENCE: AUDIO_FEATURE_VALENCE,
+  
+  // Routines
   getInitialJukeboxState: getInitialJukeboxState,
   registerUser: registerUser
 };

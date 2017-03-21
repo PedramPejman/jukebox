@@ -52,8 +52,13 @@ function getTopTracks(accessToken) {
   var spotifyApi = new SpotifyWebApi();
   spotifyApi.setAccessToken(accessToken);
 
+  // Pass optional params where limit = # of entities to return and
+  // time_range = over what time frame the affinities are computed
+  // (short_term = approximately the last 4 weeks)
+  var options = {'limit': '50', 'time_range': 'short_term'}
+
   // Return top tracks wrapped in a promise
-  return spotifyApi.getMyTopTracks();
+  return spotifyApi.getMyTopTracks(options);
 }
 
 /*

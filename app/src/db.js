@@ -1,5 +1,3 @@
-var app = require('./app.js');
-
 var mysql = require('mysql');
 
 var DB_USER = process.env.DB_USER || 'ubuntu';
@@ -7,6 +5,13 @@ var DB_PASS = process.env.DB_PASS || 'jukebox';
 var DB_HOST = process.env.DB_HOST || '127.0.0.1';
 var DB_NAME = process.env.DB_NAME || 'jb_dev';
 var DB_POOL = process.env.DB_POOL || 8;
+
+// Audio Features
+const ACOUSTICNESS = 'acousticness';
+const DANCEABILITY = 'danceability';
+const ENERGY = 'energy';
+const TEMPO = 'tempo';
+const VALENCE = 'valence';
 
 // Create a global reference for the connection pool to the proxy server
 var pool = mysql.createConnection({
@@ -106,7 +111,8 @@ function getUser(accessToken) {
     pool.query('SELECT `id` FROM `user` WHERE `access_token` = ?', 
         [accessToken], function(error, results, fields) {
           if (results === undefined || results.length == 0) {
-            return reject(error);
+            return reject(error ? error : 
+                "No results found for access_token " + accessToken);
           }
           return fulfill(results[0]['id']);
         });
@@ -144,8 +150,8 @@ function addTopTrack(userId, trackUri, features) {
 
             // Execute query for adding new TrackFeatures and transition promise state
             pool.query('INSERT INTO `track_features` (`track_uri`, `acousticness`, `danceability`, `energy`, `tempo`, `valence`) VALUES (?, ?, ?, ?, ?, ?)',
-                [trackUri, features[app.ACOUSTICNESS], features[app.DANCEABILITY], features[app.ENERGY], 
-                 features[app.TEMPO], features[app.VALENCE]], function(error, results, fields) {
+                [trackUri, features[ACOUSTICNESS], features[DANCEABILITY], features[ENERGY], 
+                 features[TEMPO], features[VALENCE]], function(error, results, fields) {
                   
                   // Rollback first insert if unsuccessful
                   if (error) {
@@ -162,7 +168,7 @@ function addTopTrack(userId, trackUri, features) {
                       });
                     }
 
-                    return fulfill("Track " + trackUri + " added for user " + userId);
+                    return fulfill();
                   });
             });
 
@@ -207,8 +213,8 @@ function main() {
   getUser("token1").then(callback, callback);
 
   // Example usage of addTopTrack()
-  features = {[app.ACOUSTICNESS]: 0.3, [app.DANCEABILITY]: 0.5, 
-    [app.ENERGY]: 0.8, [app.TEMPO]: 113.4, [app.VALENCE]: 0.8};
+  features = {[ACOUSTICNESS]: 0.3, [DANCEABILITY]: 0.5, 
+    [ENERGY]: 0.8, [TEMPO]: 113.4, [VALENCE]: 0.8};
   addTopTrack("user1", "track-rui", features).then(disconnectCB, disconnectCB);
 }
 

@@ -15,7 +15,7 @@ const AUDIO_FEATURE_VALENCE = 'valence';
 const SEED_TRACK_ALBUM = 'album';
 const SEED_TRACK_ARTIST = 'artist';
 const SEED_TRACK_NAME = 'name';
-const SEED_TRACK_ID = 'id';
+const SEED_TRACK_URI = 'uri';
 const SEED_TRACK_IMAGE = 'image';
 
 // InitialJukeboxState member fields
@@ -29,19 +29,31 @@ const DEFAULT_PARAMS = 'defaultParams';
  * with format {SEED_TRACKS: [], DEFAULT_PARAMS: {}}
  */
 function getInitialJukeboxState(accessToken) {
-  return getTopTracks(accessToken)
-    .then(function(topTracksObj) {
-      seedTracks = getSeedTracks(topTracksObj);
-      tracksIds = extractTracksIds(topTracksObj);
-      return getAudioFeatures(accessToken, tracksIds)
-        .then(function(tracksFeatures) {
-          defaultParams = getDefaultJukeboxParams(tracksFeatures);
-          return {
-            [SEED_TRACKS] : seedTracks,
-            [DEFAULT_PARAMS] : defaultParams 
-          };
-        }, bubbleUpError);
+
+  // Return values
+  var seedTracks, defaultParams;
+
+  // Gets seed tracks and raw AudioFeatures object
+  var getSeedsAndFeatures = function(topTracksObj) {
+    seedTracks = getSeedTracks(topTracksObj);
+    tracksIds = extractTracksIds(topTracksObj);
+    return getAudioFeatures(accessToken, tracksIds)
+  };
+
+  // Records top track and returns InitJBState
+  var recordAndGetInitState = function(topTracksFeatures) {
+    return recordTopTracks(accessToken, topTracksFeatures).then(function() {
+      defaultParams = getDefaultJukeboxParams(topTracksFeatures);
+      return {
+        [SEED_TRACKS] : seedTracks,
+        [DEFAULT_PARAMS] : defaultParams 
+      };
     }, bubbleUpError);
+  };
+
+  return getTopTracks(accessToken)
+    .then(getSeedsAndFeatures, bubbleUpError)
+    .then(recordAndGetInitState, bubbleUpError);
 }
 
 /*
@@ -49,10 +61,6 @@ function getInitialJukeboxState(accessToken) {
  * Returns a promise containing a 
  */
 function registerUser(accessToken) {
-
-  // Connect to the DB
-  db.connect();
-
   return getMe(accessToken).
     then(function(userObject) {
       id = userObject['body']['id'];
@@ -111,7 +119,7 @@ function extractTracksIds(topTracksObj) {
 }
 
 /*
- * Returns a promise containing default Jukebox parameters
+ * Returns default Jukebox parameters
  */
 function getDefaultJukeboxParams(tracksFeatures) {
   features = {
@@ -140,7 +148,7 @@ function getDefaultJukeboxParams(tracksFeatures) {
 }
 
 /*
- * Returns a promise containing select fields of potential seed tracks
+ * Returns select fields of potential seed tracks
  */
 function getSeedTracks(topTracksObj) {
   seedTracks = [];
@@ -149,7 +157,7 @@ function getSeedTracks(topTracksObj) {
   topTracksObj.body.items.forEach(function(track){
     tempTrack = {};
     tempTrack[SEED_TRACK_NAME] = track[SEED_TRACK_NAME];
-    tempTrack[SEED_TRACK_ID] = track[SEED_TRACK_ID];
+    tempTrack[SEED_TRACK_URI] = track[SEED_TRACK_URI];
     tempTrack[SEED_TRACK_ALBUM] = track[SEED_TRACK_ALBUM]['name']; 
     tempTrack[SEED_TRACK_ARTIST] = track['artists'][0]['name'];
     tempTrack[SEED_TRACK_IMAGE] = track[SEED_TRACK_ALBUM]['images'][0]['url'];
@@ -157,6 +165,47 @@ function getSeedTracks(topTracksObj) {
   });
 
   return seedTracks;
+}
+
+/* 
+ * Records the top tracks and their features for the given user
+ * Returns 0 on success and non-zero status code on failure
+ */
+function recordTopTracks(accessToken, topTrackFeatures) {
+  template = {
+    [AUDIO_FEATURE_ACOUSTICNESS] : 0,
+    [AUDIO_FEATURE_DANCEABILITY] : 0,
+    [AUDIO_FEATURE_ENERGY] : 0,
+    [AUDIO_FEATURE_TEMPO] : 0,
+    [AUDIO_FEATURE_VALENCE] : 0
+  };
+  features = {};
+
+  // Retrieve user id for access token
+  return db.getUser(accessToken).then(function(userId) {
+
+    // Prepare data to make db.addTopTrack() call
+    topTrackFeatures.body.audio_features.forEach(function(trackFeatures) {
+
+      // Reset features
+      features = {};
+
+      // Compile relevant features
+      Object.keys(template).forEach(function(feature) {
+        features[feature] = trackFeatures[feature];
+      });
+
+      // compile track uri
+      trackUri = trackFeatures[SEED_TRACK_URI];
+      
+      // Add top track item
+      // TODO: return a promise for each insertion and wait on all
+      db.addTopTrack(userId, trackUri, features).catch(function(err) {
+        if (err.code != "ER_DUP_ENTRY") logError(err); 
+      });
+    });
+
+  }, bubbleUpError);
 }
 
 /*
@@ -167,16 +216,10 @@ function bubbleUpError(err) {
 }
 
 /*
- * Returns an empty InitialJukeboxState object
+ * Logs error to console
  */
-function getEmptyInitialJukeboxState(error) {
-  // Log why we are returning empty initial state
-  console.log(error);
-
-  return {
-    [SEED_TRACKS] : null, 
-    [DEFAULT_PARAMS] : null
-  };
+function logError(err) {
+  console.log(err);
 }
 
 /******************** Main Routines ********************/
@@ -200,19 +243,19 @@ module.exports = {
 function main() {
   
   // Set access token for example calls
-  accessToken = ''; 
+  accessToken = '';
 
   // Template callback
   callback = function(message) {
     if (message) console.log(message);
   }
   
-  // Example usage of getInitialJukeboxState
-  getInitialJukeboxState(accessToken).then(callback, callback);
-  
   // Example usage of registerUser 
   registerUser(accessToken).then(callback, callback);
 
+  // Example usage of getInitialJukeboxState
+  getInitialJukeboxState(accessToken).then(callback, callback);
+  
 }
 
 if (require.main === module) {

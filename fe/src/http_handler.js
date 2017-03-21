@@ -3,7 +3,8 @@ var appClient = require('./app_client.js'),
 
 var CLIENT_ID = process.env.CLIENT_ID || 'c99f31ef396d40ffb498f24d1803b17f',
     FE_HTTP_HOST = process.env.FE_HTTP_HOST || 'http://jukebox.life',
-    CLIENT_SECRET = process.env.CLIENT_SECRET || fatal("No CLIENT_SECRET");
+    CLIENT_SECRET = process.env.CLIENT_SECRET || fatal("No CLIENT_SECRET"),
+    IS_PROD = process.env.ENVIRONMENT == 'production';
 /*  
  * Redirects user to Spotify authroization endpoint
  */
@@ -52,7 +53,9 @@ exports.authCallback = function (req, res) {
       getAccessCodeCallback(res, err, resp, body);
     });
 
-
+  } else if (!IS_PROD && req.query.access_token) {
+    // For development, allow direct receipt of access token
+    getAccessCodeCallback(res, null, res, req.query);
   } else {
     console.log("code was not supplied.");
     // TODO: Replace with error page redirect
@@ -109,30 +112,33 @@ function fatal(message) {
  * Extracts access token and makes getInitialJikeboxState RPC
  */
 function getAccessCodeCallback(res, error, response, body) {
-      if (!error && response.statusCode == 200) {
+  if (error || response.statusCode != 200) {
+    echoBack(error, response, res);
+  } else {
 
-        // Retrieve access token
-        accessToken = body.access_token; 
+    // Retrieve access token
+    accessToken = body.access_token; 
 
-        // Make RPC to obtain initial Jukebox state
-        // TODO: Make more readable by using templated error routines
-        appClient.getInitialJukeboxState(accessToken, function(err, resp) {
-          if (err) { 
-            res.send(err);
-            console.log(err);
-          } else {
-            res.send(resp);
-            console.log(resp);
-          }
-        });
-      } else {
-        // Echo error back appropriately
-        if (error) {
-          console.log(error);
-          res.end("Error: " + error);
-        } else {
-          console.log(response);
-          res.end("Request did not receive 200");
-        }
-      }
-    }
+    // Make RPC to register user
+    appClient.registerUser(accessToken, function() {
+      // Make RPC to obtain initial Jukebox state
+      appClient.getInitialJukeboxState(accessToken, function(err, resp) {
+        echoBack(err, resp, res);
+      });
+    });
+
+  }
+}
+
+/*
+ * Template callback - writes err/resp to pipe and logs to console
+ */
+function echoBack(err, resp, pipe) {
+  if (err) { 
+    pipe.send(err);
+    console.log(err);
+  } else {
+    pipe.send(resp);
+    console.log(resp);
+  }
+}

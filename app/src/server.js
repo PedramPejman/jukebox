@@ -14,9 +14,9 @@ var proto = grpc.load(PROTO_PATH).app;
  */
 function getInitialJukeboxState(call, callback) {
   console.log('Received GetInitialJukeboxState RPC with access token : '
-      + call.request.access_token);
+      + call.request.accessToken);
 
-  app.getInitialJukeboxState(call.request.access_token).
+  app.getInitialJukeboxState(call.request.accessToken).
     then(function(initialState) {
       console.log(initialState);
       callback(null, initialState);
@@ -31,9 +31,9 @@ function getInitialJukeboxState(call, callback) {
  */
 function registerUser(call, callback) {
   console.log('Received RegisterUser RPC with access token : '
-      + call.request.access_token);
+      + call.request.accessToken);
 
-  app.registerUser(call.request.access_token).
+  app.registerUser(call.request.accessToken).
     then(function(response) {
       console.log(response);
       callback(null, {message: response});

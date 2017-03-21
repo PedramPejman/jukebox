@@ -21,6 +21,7 @@ const SEED_TRACK_IMAGE = 'image';
 // InitialJukeboxState member fields
 const SEED_TRACKS = 'seedTracks';
 const DEFAULT_PARAMS = 'defaultParams';
+const ACCESS_TOKEN = 'accessToken';
 
 /************** Exported Routines ****************/
 
@@ -46,7 +47,8 @@ function getInitialJukeboxState(accessToken) {
       defaultParams = getDefaultJukeboxParams(topTracksFeatures);
       return {
         [SEED_TRACKS] : seedTracks,
-        [DEFAULT_PARAMS] : defaultParams 
+        [DEFAULT_PARAMS] : defaultParams,
+        [ACCESS_TOKEN] : accessToken
       };
     }, bubbleUpError);
   };

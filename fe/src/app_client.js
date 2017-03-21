@@ -14,14 +14,14 @@ var appClient = new proto.AppService(HOST + ":" + PORT,
  * Stub for the GetInitialJukeboxState RPC call
  */
 function getInitialJukeboxState(accessToken, callback) {
-  appClient.getInitialJukeboxState({access_token: accessToken}, callback);
+  appClient.getInitialJukeboxState({accessToken: accessToken}, callback);
 }
 
 /*
  * Stub for the RegisterUser RPC call
  */
 function registerUser(accessToken, callback) {
-  appClient.registerUser({access_token: accessToken}, callback);
+  appClient.registerUser({accessToken: accessToken}, callback);
 }
 
 /*

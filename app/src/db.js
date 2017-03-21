@@ -73,7 +73,6 @@ function addUser(userId, accessToken) {
             pool.query('UPDATE `user` SET `access_token`=? WHERE `id` = ?',
                 [accessToken, userId], function(error, results, fields) {
                   if (error) {
-                    console.log("Unable to update user %s with access token %s", userId, accessToken);
                     return reject(error);
                   }
                   return fulfill("User " + userId + " updated");
@@ -84,7 +83,6 @@ function addUser(userId, accessToken) {
             pool.query('INSERT INTO `user` (`id`, `access_token`) VALUES (?, ?)',
                 [userId, accessToken], function(error, results, fields) {
                   if (error) {
-                    console.log("Unable to add user %s with access token %s", userId, accessToken);
                     return reject(error);
                   }
                   return fulfill("User " + userId + " added");
@@ -108,7 +106,6 @@ function getUser(accessToken) {
     pool.query('SELECT `id` FROM `user` WHERE `access_token` = ?', 
         [accessToken], function(error, results, fields) {
           if (results === undefined || results.length == 0) {
-            console.log("Unable to find user with access token %s", accessToken);
             return reject(error);
           }
           return fulfill(results[0]['id']);
@@ -130,6 +127,7 @@ function addTopTrack(userId, trackUri, features) {
 
     // Use a transaction as the two insertions must be atomic 
     pool.beginTransaction(function(err){
+
       // Reject if we can't begin transaction
       if (err) return reject(err);
 
@@ -140,7 +138,6 @@ function addTopTrack(userId, trackUri, features) {
             // Rollback first insert if unsuccessful
             if (error) {
                 return pool.rollback(function() {
-                  console.log("Unable to add top track %s for user %s", trackUri, userId);
                   return reject(error);
               });
             }
@@ -153,7 +150,6 @@ function addTopTrack(userId, trackUri, features) {
                   // Rollback first insert if unsuccessful
                   if (error) {
                       return pool.rollback(function() {
-                        console.log("Unable to add track features for track %s", trackUri);
                         return reject(error);
                     });
                   }
@@ -162,12 +158,10 @@ function addTopTrack(userId, trackUri, features) {
                   pool.commit(function(err) {
                     if (err) {
                       return pool.rollback(function() {
-                        console.log("Unable to add top track %s for user %s", trackUri, userId);
                         return reject(err);
                       });
                     }
 
-                    console.log("Track " + trackUri + " added for user " + userId);
                     return fulfill("Track " + trackUri + " added for user " + userId);
                   });
             });
@@ -191,6 +185,7 @@ module.exports = {
  * Example usage of the exported routines
  */
 function main() {
+
   // Define template callback
   callback = function(message) {
     if (message) console.log(message);
@@ -206,11 +201,12 @@ function main() {
   connect().then(callback, callback);
 
   // Example usage of addUser()
-  //addUser("user1", "token1").then(callback, callback);
+  addUser("user1", "token1").then(callback, callback);
 
   // Example usage of getUser()
-  //getUser("token1").then(disconnectCB, disconnectCB);
+  getUser("token1").then(callback, callback);
 
+  // Example usage of addTopTrack()
   features = {[app.ACOUSTICNESS]: 0.3, [app.DANCEABILITY]: 0.5, 
     [app.ENERGY]: 0.8, [app.TEMPO]: 113.4, [app.VALENCE]: 0.8};
   addTopTrack("user1", "track-rui", features).then(disconnectCB, disconnectCB);

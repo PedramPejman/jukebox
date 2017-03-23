@@ -78,6 +78,9 @@ function main() {
     registerUser: registerUser
   });
 
+  // Do initialization for app module
+  app.init();
+
   // Bind server to host address and start server 
   server.bind(HOST + ":" + PORT, grpc.ServerCredentials.createInsecure());
   server.start();

@@ -26,6 +26,16 @@ const ACCESS_TOKEN = 'accessToken';
 /************** Exported Routines ****************/
 
 /*
+ * Initialization routine for all set up work and assertions
+ */
+function init() {
+  // Ensure valid connection pool to database
+  db.connect().then(function() {
+    console.log("Connected to database");
+  }, logError);
+}
+
+/*
  * Returns a promise containing the initial jukebox state
  * with format {SEED_TRACKS: [], DEFAULT_PARAMS: {}}
  */
@@ -235,6 +245,7 @@ module.exports = {
   VALENCE: AUDIO_FEATURE_VALENCE,
   
   // Routines
+  init: init,
   getInitialJukeboxState: getInitialJukeboxState,
   registerUser: registerUser
 };

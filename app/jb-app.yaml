@@ -20,6 +20,11 @@ spec:
                 secretKeyRef:
                   name: cloudsql
                   key: username
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql
+                  key: password
           ports:
             - containerPort: 34000
               name: jb-app-server

@@ -146,40 +146,41 @@ function addTopTrack(userId, trackUri, features) {
         // Execute query for adding new TopTrack and transition promise state
         connection.query('INSERT INTO `top_track` (`user_id`, `track_uri`) VALUES (?, ?)',
             [userId, trackUri], function(error, results, fields) {
-              
-              // Rollback first insert if unsuccessful
-              if (error) {
-                  return connection.rollback(function() {
-                    connection.release();
-                    return reject(error);
+
+          // Rollback first insert if unsuccessful
+          if (error) {
+              return connection.rollback(function() {
+                connection.release();
+                return reject(error);
+            });
+          }
+
+          // Execute query for adding new TrackFeatures and transition promise state
+          connection.query('INSERT INTO `track_features` (`track_uri`, `acousticness`, \
+                `danceability`, `energy`, `tempo`, `valence`) VALUES (?, ?, ?, ?, ?, ?)',
+              [trackUri, features[ACOUSTICNESS], features[DANCEABILITY], features[ENERGY], 
+              features[TEMPO], features[VALENCE]], function(error, results, fields) {
+
+            // Rollback first insert if unsuccessful
+            if (error) {
+                return connection.rollback(function() {
+                  connection.release();
+                  return reject(error);
+              });
+            }
+
+            // Commit both queries
+            connection.commit(function(err) {
+              connection.release();
+              if (err) {
+                return connection.rollback(function() {
+                  return reject(err);
                 });
               }
 
-              // Execute query for adding new TrackFeatures and transition promise state
-              connection.query('INSERT INTO `track_features` (`track_uri`, `acousticness`, `danceability`, `energy`, `tempo`, `valence`) VALUES (?, ?, ?, ?, ?, ?)',
-                  [trackUri, features[ACOUSTICNESS], features[DANCEABILITY], features[ENERGY], 
-                   features[TEMPO], features[VALENCE]], function(error, results, fields) {
-                    
-                    // Rollback first insert if unsuccessful
-                    if (error) {
-                        return connection.rollback(function() {
-                          connection.release();
-                          return reject(error);
-                      });
-                    }
-
-                    // Commit both queries
-                    connection.commit(function(err) {
-                      connection.release();
-                      if (err) {
-                        return connection.rollback(function() {
-                          return reject(err);
-                        });
-                      }
-
-                      return fulfill();
-                    });
-              });
+              return fulfill();
+            });
+          });
 
         });
       });

@@ -14,6 +14,8 @@ RUN npm install
 # Set environment variables
 ENV APP_RPC_HOST 0.0.0.0
 ENV APP_RPC_PORT 34000
+ENV GEN_RPC_HOST jb-gen
+ENV GEN_RPC_PORT 35000 
 
 # Expose port for HTTP traffic
 EXPOSE ${APP_RPC_PORT}

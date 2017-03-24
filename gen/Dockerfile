@@ -21,4 +21,4 @@ ENV GEN_RPC_PORT 35000
 EXPOSE ${GEN_RPC_PORT}
 
 # Start the server
-CMD [ "python3", "./src/main.py" ]
+CMD [ "python", "./src/server.py" ]

@@ -1,6 +1,5 @@
-# From base image containing Python3 scikit-learn 
-# with Jupyter docker image based on alpine
-FROM smizy/scikit-learn:latest
+# From lightweight base python image
+FROM python:latest
 
 # Create app directory
 RUN mkdir -p /usr/jukebox/gen
@@ -8,6 +7,9 @@ WORKDIR /usr/jukebox/gen
 
 # Bundle app resources
 COPY . /usr/jukebox/gen
+
+# Install dependencies
+RUN pip install -r requirements.txt
 
 # Set environment variables
 ENV APP_RPC_HOST jb-app

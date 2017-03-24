@@ -3,6 +3,7 @@
 *.swp
 *node_modules*
 */protos
+*/*/protos
 *debug.log
 
 # Ignore compiled *.css

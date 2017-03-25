@@ -57,4 +57,16 @@ CREATE TABLE IF NOT EXISTS track_features (
   `danceability` FLOAT,
   `energy` FLOAT,
   `tempo` FLOAT,
-  `valence` FLOAT); 
+  `valence` FLOAT,
+  FOREIGN KEY (`track_uri`) REFERENCES top_track(`track_uri`)
+    ON DELETE CASCADE); 
+
+/* Create Playlist table
+*/
+CREATE TABLE IF NOT EXISTS playlist (
+  `id` INTEGER PRIMARY KEY AUTO_INCREMENT,
+  `userId` VARCHAR(128) NOT NULL, 
+  `uri` VARCHAR(64) NOT NULL,
+  `creation_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`userId`) REFERENCES user(`id`)
+    ON DELETE CASCADE);

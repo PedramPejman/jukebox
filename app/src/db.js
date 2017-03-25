@@ -181,12 +181,116 @@ function addTopTrack(userId, trackUri, features) {
               return fulfill();
             });
           });
-
         });
       });
-
     });
+  });
+}
 
+
+/*
+ * Returns a promise which resolves to fulfilled if
+ * the insertion is successful.
+ */
+function addPlaylist(userId, uri) {
+  return new Promise(function (fulfill, reject) {
+    
+    // Ensure connection exists
+    if (!pool) return reject("Not connected to DB.");
+
+    // Execute query for adding a new playlist and transition promise state
+    pool.query('INSERT INTO `playlist` (`userId`, `uri`) VALUES (?, ?)',
+        [userId, uri], function(error, results, fields) {
+          if (error) {
+            return reject(error);
+          }
+
+          // Query for the auto increment id
+          pool.query('SELECT `AUTO_INCREMENT` FROM INFORMATION_SCHEMA.TABLES \
+              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = "playlist";', 
+              function(error, results, fields) {
+                if (error || results == undefined || results.length < 1) {
+                  return reject(error);
+                }
+                id = results[0]['AUTO_INCREMENT']
+                return fulfill("Playlist " + id + " with uri " + uri + " added");
+              });
+    });
+  });
+}
+
+/*
+ * Returns a promise which resolves to fulfilled and returns the
+ * playlist id if the uri corresponds to a valid playlist.
+ */
+function getPlaylistId(uri) {
+  return new Promise(function (fulfill, reject) {
+    
+    // Ensure connection exists
+    if (!pool) return reject("Not connected to DB.");
+
+    // Execute the query and transition promise state
+    pool.query('SELECT `id` FROM `playlist` WHERE `uri` = ?', 
+        [uri], function(error, results, fields) {
+          if (results === undefined || results.length == 0) {
+            return reject(error ? error : 
+                "No results found for playlist with uri " + uri);
+          }
+          return fulfill(results[0]['id']);
+        });
+  });
+}
+
+/*
+ * Returns a promise which resolves to fulfilled and returns the
+ * playlist uri if the id corresponds to a valid playlist.
+ */
+function getPlaylistUri(id) {
+  return new Promise(function (fulfill, reject) {
+    
+    // Ensure connection exists
+    if (!pool) return reject("Not connected to DB.");
+
+    // Execute the query and transition promise state
+    pool.query('SELECT `uri` FROM `playlist` WHERE `id` = ?', 
+        [id], function(error, results, fields) {
+
+          if (results === undefined || results.length == 0) {
+            return reject(error ? error : 
+                "No results found for playlist with id" + id);
+          }
+
+          return fulfill(results[0]['uri']);
+        });
+  });
+}
+
+/*
+ * Returns a promise which resolves to fulfilled and returns the
+ * list of playlist id's and uri's for the given user.
+ */
+function getUserPlaylists(userId) {
+  return new Promise(function (fulfill, reject) {
+    
+    // Ensure connection exists
+    if (!pool) return reject("Not connected to DB.");
+
+    // Execute the query and transition promise state
+    pool.query('SELECT `id`, `uri` FROM `playlist` WHERE `userId` = ?', 
+        [userId], function(error, results, fields) {
+
+          if (results === undefined || results.length == 0) {
+            return reject(error ? error : 
+                "No results found for user " + userId);
+          }
+
+          // Purify the playlists object
+          playlists = results.map(function(item) {
+            return {'id': item['id'], 'uri': item['uri']};
+          });
+
+          return fulfill(playlists);
+        });
   });
 }
 /******************** Helpers *********************/
@@ -196,7 +300,11 @@ module.exports = {
   disconnect: disconnect,
   addUser: addUser,
   getUser: getUser,
-  addTopTrack: addTopTrack
+  addTopTrack: addTopTrack, 
+  addPlaylist: addPlaylist,
+  getPlaylistId: getPlaylistId,
+  getPlaylistUri: getPlaylistUri,
+  getUserPlaylists: getUserPlaylists
 };
 
 /* 
@@ -204,30 +312,46 @@ module.exports = {
  */
 function main() {
 
-  // Define template callback
-  callback = function(message) {
-    if (message) console.log(message);
-  }
+  /*
+   * Example template callback
+   *
+   * callback = function(message) {
+   *  if (message) console.log(message);
+   * }
+   *
+   */
 
-  // Define disconnect callback
-  disconnectCB = function(message) {
-    callback(message);
-    disconnect();
-  }
+  /*
+   * Example usage of connect and disconnect
+   *
+   * connect().then(callback, callback);
+   * disconnect().then(callback, callback);
+   */
 
-  // Establish connection
-  connect().then(callback, callback);
+  /*
+   * Example usage of User routines
+   *
+   * addUser("user1", "token1").then(callback, callback);
+   * getUser("token1").then(callback, callback);
+   */
 
-  // Example usage of addUser()
-  addUser("user1", "token1").then(callback, callback);
+  /*
+   * Example usage of TopTrack routines
+   *
+   * features = {[ACOUSTICNESS]: 0.3, [DANCEABILITY]: 0.5, 
+   *   [ENERGY]: 0.8, [TEMPO]: 113.4, [VALENCE]: 0.8};
+   * addTopTrack("user1", "uri1", features).then(callback, callback);
+   */
 
-  // Example usage of getUser()
-  getUser("token1").then(callback, callback);
+  /*
+   * Example usage of Playlist routines
+   *
+   * addPlaylist("user1", "uri2").then(disconnectCB, disconnectCB);
+   * getPlaylistId("uri1").then(disconnectCB, disconnectCB);
+   * getUserPlaylists("user1").then(disconnectCB, disconnectCB);
+   * getPlaylistUri("15").then(disconnectCB, disconnectCB);
+   */
 
-  // Example usage of addTopTrack()
-  features = {[ACOUSTICNESS]: 0.3, [DANCEABILITY]: 0.5, 
-    [ENERGY]: 0.8, [TEMPO]: 113.4, [VALENCE]: 0.8};
-  addTopTrack("user1", "track-rui", features).then(disconnectCB, disconnectCB);
 }
 
 /*

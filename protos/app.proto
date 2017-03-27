@@ -8,7 +8,16 @@ package app;
  * App service exposing RPC call to get the initial Jukebox state
  */
 service AppService {
+
+  /* 
+   * Given Spotify Authentication information, returns an initial
+   * JukeboxState object, containing seed tracks and default parameters
+   */
   rpc GetInitialJukeboxState(AuthCreds) returns (JukeboxState) {}
+  
+  /*
+   * Registers the user with given Spotify Auth info in Jukebox database
+   */
   rpc RegisterUser(AuthCreds) returns (GenResponse) {}
 }
 
@@ -24,7 +33,7 @@ message AuthCreds {
  */
 message JukeboxState {
   repeated SeedTrack seedTracks = 1;
-  DefaultParams defaultParams = 2; 
+  AudioFeatureParams audioFeatureParams = 2; 
   string accessToken = 3;
   int32 playlistId = 4;
   string playlistUri = 5;
@@ -42,9 +51,9 @@ message SeedTrack {
 }
 
 /*
- * Represents the default audio feature parameters
+ * Represents the audio feature parameters
  */
-message DefaultParams {
+message AudioFeatureParams {
   float acousticness = 1;
   float danceability = 2;
   float energy = 3;

@@ -18,9 +18,9 @@ const SEED_TRACK_NAME = 'name';
 const SEED_TRACK_URI = 'uri';
 const SEED_TRACK_IMAGE = 'image';
 
-// InitialJukeboxState member fields
+// JukeboxState member fields
 const SEED_TRACKS = 'seedTracks';
-const DEFAULT_PARAMS = 'defaultParams';
+const AUDIO_FEATURE_PARAMS = 'audioFeatureParams';
 const ACCESS_TOKEN = 'accessToken';
 
 /************** Exported Routines ****************/
@@ -37,7 +37,7 @@ function init() {
 
 /*
  * Returns a promise containing the initial jukebox state
- * with format {SEED_TRACKS: [], DEFAULT_PARAMS: {}}
+ * with format {SEED_TRACKS: [], AUDIO_FEATURE_PARAMS: {}}
  */
 function getInitialJukeboxState(accessToken) {
 
@@ -57,7 +57,7 @@ function getInitialJukeboxState(accessToken) {
       defaultParams = getDefaultJukeboxParams(topTracksFeatures);
       return {
         [SEED_TRACKS] : seedTracks,
-        [DEFAULT_PARAMS] : defaultParams,
+        [AUDIO_FEATURE_PARAMS] : defaultParams,
         [ACCESS_TOKEN] : accessToken
       };
     }, bubbleUpError);
@@ -93,7 +93,7 @@ function getTopTracks(accessToken) {
   // Pass optional params where limit = # of entities to return and
   // time_range = over what time frame the affinities are computed
   // (short_term = approximately the last 4 weeks)
-  var options = {'limit': '50', 'time_range': 'short_term'}
+  var options = {'limit': '50', 'time_range': 'short_term'};
 
   // Return top tracks wrapped in a promise
   return spotifyApi.getMyTopTracks(options);
@@ -124,6 +124,24 @@ function getMe(accessToken) {
   return spotifyApi.getMe();
 }
 
+function getRecommendations(accessToken,
+    seedTracks, audioFeatureParams) {
+  // Instatiate api instance and set its accessToken
+  var spotifyApi = new SpotifyWebApi();
+  spotifyApi.setAccessToken(accessToken);
+
+  // Build options
+  var options = {};
+  options['seed_tracks'] = seedTracks;
+  Object.keys(audioFeatureParams).forEach(function(key, index, _array) {
+    this['target_' + key] = audioFeatureParams[key];
+  }, options);
+
+  console.log(options);
+
+  // Return recommendations wrapped in a promise
+  return spotifyApi.getRecommendations(options);
+}
 /****************** Helpers ********************/
 
 /*
@@ -261,18 +279,23 @@ module.exports = {
 function main() {
   
   // Set access token for example calls
-  accessToken = '';
+  var accessToken = '';
 
   // Template callback
-  callback = function(message) {
+  var callback = function(message) {
     if (message) console.log(message);
   }
   
-  // Example usage of registerUser 
-  registerUser(accessToken).then(callback, callback);
+  /*
+   * Example usage of registerUser 
+   *
+   * registerUser(accessToken).then(callback, callback);
+   */
 
-  // Example usage of getInitialJukeboxState
-  getInitialJukeboxState(accessToken).then(callback, callback);
+  /* Example usage of getInitialJukeboxState
+   *
+   * getInitialJukeboxState(accessToken).then(callback, callback);
+   */
   
 }
 

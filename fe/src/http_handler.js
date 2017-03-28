@@ -6,6 +6,10 @@ var CLIENT_ID = process.env.CLIENT_ID || 'c99f31ef396d40ffb498f24d1803b17f',
     CLIENT_SECRET = process.env.CLIENT_SECRET || fatal("No CLIENT_SECRET"),
     IS_PROD = process.env.ENVIRONMENT == 'production';
 
+// HTTP.GET parameters
+const PARAM_ACCESS_TOKEN = 'access_token';
+const PARAM_USER_ID = 'user_id';
+
 // JukeboxState member fields
 const SEED_TRACKS = 'seedTracks';
 const AUDIO_FEATURE_PARAMS = 'audioFeatureParams';
@@ -36,33 +40,17 @@ exports.home = function (req, res) {
 exports.authCallback = function (req, res) {
   // Check if authorization code was supplied by Spotify API
   if (req.query.code) {
-    var code = req.query.code;
-    var grantType = 'authorization_code';
-    var redirectUri = FE_HTTP_HOST + '/auth-callback';
-    var authUrl = 'https://accounts.spotify.com/api/token';
-    
-    var options = {
-      url : authUrl,
-      method : "POST",
-      json : true,
-      form : {
-        grant_type : grantType,
-        code : code,
-        redirect_uri : encodeURIComponent(redirectUri),
-        client_id : CLIENT_ID,
-        client_secret : CLIENT_SECRET
-      }
-    };
+    // Create GET request options
+    var options = buildOptionsForAccessTokenRequest(req.query.code);
 
-    // Call Spotify API to obtain access token
+    // Call Spotify API to obtain access token and redirect to init
     request(options, function(err, resp, body) {
-      // Extract access code and make getInitJBState RPC
-      getAccessCodeCallback(res, err, resp, body);
+      registerUserAndRedirectToInit(res, err, resp, body);
     });
 
+  // For development, allow direct receipt of access token
   } else if (!IS_PROD && req.query.access_token) {
-    // For development, allow direct receipt of access token
-    getAccessCodeCallback(res, null, res, req.query);
+    registerUserAndRedirectToInit(res, null, res, req.query);
   } else {
     console.log("code was not supplied.");
     // TODO: Replace with error page redirect
@@ -104,6 +92,33 @@ exports.homeView = function(req, res) {
   res.render('homeView');
 };
 
+/*
+ * Executes APP.GetInitialJukeboxState RPC and returns
+ * resulting JukeboxState to user
+ */
+exports.initialize = function(req, res) {
+  if (!req.query[PARAM_ACCESS_TOKEN] || !req.query[PARAM_USER_ID]) {
+    // TODO: Replace with error page
+    return echoBack('Required parameters not supplied', null, res);
+  }
+
+  var accessToken = req.query[PARAM_ACCESS_TOKEN];
+  var userId = req.query[PARAM_USER_ID];
+
+  // Make RPC to obtain initial Jukebox state
+  appClient.getInitialJukeboxState(accessToken, userId, function(err, resp) {
+    echoBack(err, resp, res);
+  });
+}
+
+/*
+ * Executes APP.GenerateJukebox RPC and returns 
+ * resulting jukebox id.
+ */
+exports.generate = function(req, res) {
+
+};
+
 /********************** Helpers *************************/
 
 /*
@@ -115,10 +130,34 @@ function fatal(message) {
 }
 
 /*
- * Called in auth-callback 
- * Extracts access token and makes getInitialJikeboxState RPC
+ * Called in auth-callback
+ * Creates the options for access token GET request
  */
-function getAccessCodeCallback(res, error, response, body) {
+function buildOptionsForAccessTokenRequest(code) {
+  var grantType = 'authorization_code';
+  var redirectUri = FE_HTTP_HOST + '/auth-callback';
+  var authUrl = 'https://accounts.spotify.com/api/token';
+  
+  return {
+    url : authUrl,
+    method : "POST",
+    json : true,
+    form : {
+      grant_type : grantType,
+      code : code,
+      redirect_uri : encodeURIComponent(redirectUri),
+      client_id : CLIENT_ID,
+      client_secret : CLIENT_SECRET
+    }
+  };
+}
+
+/*
+ * Called in auth-callback 
+ * Extracts access token, makes RegisterUser RPC and
+ * Redirects user to /initialize
+ */
+function registerUserAndRedirectToInit(res, error, response, body) {
   if (error || response.statusCode != 200) {
     echoBack(error, response, res);
   } else {
@@ -131,13 +170,10 @@ function getAccessCodeCallback(res, error, response, body) {
 			if (err) {
 				return echoBack(err, null, res);
 			}	
-      // Make RPC to obtain initial Jukebox state
       userId = authCreds[USER_ID];
-      appClient.getInitialJukeboxState(accessToken, userId, function(err, resp) {
-        echoBack(err, resp, res);
-      });
+      res.redirect('/initialize?' + PARAM_USER_ID + '=' + userId 
+          + '&' + PARAM_ACCESS_TOKEN + '=' + accessToken);
     });
-
   }
 }
 

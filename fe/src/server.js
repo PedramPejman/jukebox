@@ -73,6 +73,17 @@ httpServer.get('/test-view', handler.testView);
  */
 httpServer.get('/home-view', handler.homeView);
 
+/*
+ * Handles HTTP GET traffic on '/initialize'
+ * Returns application home page
+ */
+httpServer.get('/initialize', handler.initialize);
+
+/*
+ * Handles HTTP GET traffic on '/generate'
+ * Returns application home page
+ */
+httpServer.get('/generate', handler.generate);
 
 /********************** Helpers **************************/
 

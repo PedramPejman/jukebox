@@ -70,7 +70,8 @@ function shake(user, callback) {
 module.exports = {
   shake: shake,
   getInitialJukeboxState: getInitialJukeboxState,
-  registerUser: registerUser
+  registerUser: registerUser,
+  generateJukebox: generateJukebox
 };
 
 /*

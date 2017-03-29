@@ -153,7 +153,7 @@ function getTopTracks(accessToken) {
   // Pass optional params where limit = # of entities to return and
   // time_range = over what time frame the affinities are computed
   // (short_term = approximately the last 4 weeks)
-  var options = {'limit': '50', 'time_range': 'short_term'};
+  var options = {'limit': '20', 'time_range': 'short_term'};
 
   // Return top tracks wrapped in a promise
   return spotifyApi.getMyTopTracks(options);
@@ -267,9 +267,9 @@ function getDefaultJukeboxParams(tracksFeatures) {
     });   
   });
 
-  // Take simple average of all features
+  // Take simple average of all features to 2 decimal places
   Object.keys(features).forEach(function(feature) {
-    features[feature] = features[feature] / numTracks;  
+    features[feature] = Math.round(100 * features[feature] / numTracks) / 100;  
   });
 
   return features;

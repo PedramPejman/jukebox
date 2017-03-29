@@ -16,6 +16,22 @@ const AUDIO_FEATURE_PARAMS = 'audioFeatureParams';
 const ACCESS_TOKEN = 'accessToken';
 const USER_ID = 'userId';
 
+// Audio Features
+const AUDIO_FEATURE_ACOUSTICNESS = 'acousticness';
+const AUDIO_FEATURE_DANCEABILITY = 'danceability';
+const AUDIO_FEATURE_ENERGY = 'energy';
+const AUDIO_FEATURE_TEMPO = 'tempo';
+const AUDIO_FEATURE_VALENCE = 'valence';
+
+// Audiofeature Parameter fields
+// TODO: obtain from proto definitions 
+const AUDIO_FEATURE_FIELDS = [
+  AUDIO_FEATURE_ACOUSTICNESS,
+  AUDIO_FEATURE_DANCEABILITY,
+  AUDIO_FEATURE_ENERGY,
+  AUDIO_FEATURE_TEMPO,
+  AUDIO_FEATURE_VALENCE];
+
 /*  
  * Redirects user to Spotify authroization endpoint
  */
@@ -107,7 +123,23 @@ exports.initialize = function(req, res) {
 
   // Make RPC to obtain initial Jukebox state
   appClient.getInitialJukeboxState(accessToken, userId, function(err, resp) {
-    echoBack(err, resp, res);
+    if (err) {
+      return echoBack(err, null, res);
+    }
+
+    var seedTracks = resp[SEED_TRACKS];
+    var features = resp[AUDIO_FEATURE_PARAMS];
+
+    // Prepare audio feature params for presentation
+    Object.keys(features).forEach(function(feature) {
+      features[feature] = transformAudioFeatureForUI(feature, features[feature]);
+    });
+
+    res.render('initialize', {
+      [SEED_TRACKS] : seedTracks,
+      [AUDIO_FEATURE_PARAMS]: features,
+      [ACCESS_TOKEN]: accessToken,
+      [USER_ID]: userId});
   });
 }
 
@@ -116,7 +148,40 @@ exports.initialize = function(req, res) {
  * resulting jukebox id.
  */
 exports.generate = function(req, res) {
+  if (!req.body[USER_ID] || !req.body[ACCESS_TOKEN])
+    return echoBack("Request parameters not provided", null, res);
 
+  var userId = req.body[USER_ID];
+  var accessToken = req.body[ACCESS_TOKEN];
+  var audioFeatures = {};
+  var seedTracks = [];
+
+  // Clean parameters for RPC
+  Object.keys(req.body).forEach(function(param) {
+    if (AUDIO_FEATURE_FIELDS.indexOf(param) > -1)
+      audioFeatures[param] = transformAudioFeatureForBackend(param, req.body[param]);
+    else if (param != USER_ID && param != ACCESS_TOKEN)
+      // TODO: Encapsulate in separate Request/Response in protos
+      seedTracks.push({'uri': param.split(":")[2]});
+  });
+
+  // Make sure we have appropriate request parameters
+  // TODO: Replace with error page
+  if (seedTracks.length == 0) 
+    return echoBack("No seed tracks selected", null, res);
+  if (audioFeatures == {})
+    return echoBack("No audio feature parameters were supplied", null, res);
+
+  // Make RPC to APP
+  appClient.generateJukebox(accessToken, userId, 
+      audioFeatures, seedTracks, function(err, resp) {
+        if (err) {
+          return echoBack(err, null, res);
+        }
+
+        // TODO: Change to redirect
+        echoBack(null, resp, res);
+      });
 };
 
 /********************** Helpers *************************/
@@ -188,4 +253,26 @@ function echoBack(err, resp, pipe) {
     pipe.send(resp);
     console.log(resp);
   }
+}
+
+/*
+ * Transforms the scale of an audio feature
+ * to an easy, human-readable value. Tempo is rounded and
+ * all other features are transformed from [0,1) to [0,100)
+ */
+function transformAudioFeatureForUI(feature, featureValue) {
+  if (feature == AUDIO_FEATURE_TEMPO) 
+    return Math.round(featureValue);
+  return Math.round(featureValue * 100);
+}
+
+/*
+ * Undoes the transformation in transformAudioFeatureForUI()
+ * to its real scale for backend use.
+ */
+function transformAudioFeatureForBackend(feature, featureValue) {
+  featureValue = parseInt(featureValue);
+  if (feature == AUDIO_FEATURE_TEMPO)
+    return featureValue;
+  return (featureValue / 100.0);
 }

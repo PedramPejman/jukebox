@@ -6,12 +6,14 @@ var IS_PROD = process.env.ENVIRONMENT == 'production';
 var express = require('express'),
     request = require('request'),
     sassMiddleware = require('node-sass-middleware'),
+    bodyParser = require('body-parser'),
     httpServer = express();
 
 var APP_ROOT = __dirname;
 var STATIC_ROOT = APP_ROOT + '/static';
 var VIEWS_ROOT = APP_ROOT + '/views';
 var STYLESHEETS_ROOT = STATIC_ROOT + '/stylesheets';
+var JS_ROOT = STATIC_ROOT + '/js';
 var SASS_ROOT = STATIC_ROOT + '/sass';
 
 var TEMPLATE_ENGINE = 'jade';
@@ -34,6 +36,11 @@ httpServer.use(sassMiddleware({
 
 // Declare directories to look in for static files
 httpServer.use(express.static(STYLESHEETS_ROOT));
+httpServer.use(express.static(JS_ROOT));
+
+// Configure body parser for POST requests
+httpServer.use(bodyParser.json());
+httpServer.use(bodyParser.urlencoded({ extended: true }));
 
 // Bind to the specified port
 httpServer.listen(PORT, function () {
@@ -80,10 +87,10 @@ httpServer.get('/home-view', handler.homeView);
 httpServer.get('/initialize', handler.initialize);
 
 /*
- * Handles HTTP GET traffic on '/generate'
+ * Handles HTTP POST traffic on '/generate'
  * Returns application home page
  */
-httpServer.get('/generate', handler.generate);
+httpServer.post('/generate', handler.generate);
 
 /********************** Helpers **************************/
 

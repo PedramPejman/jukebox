@@ -28,6 +28,7 @@ const PLAYLIST_URI = 'playlistUri';
 
 const DEFAULT_PLAYLIST_NAME = 'Jukebox';
 const ID = 'id';
+const MAX_SEED_TRACKS = 5;
 
 /************** Exported Routines ****************/
 
@@ -98,19 +99,20 @@ function registerUser(accessToken) {
 function generateJukebox(accessToken, userId, 
     seedTracksObj, audioFeatureParams) {
 
-  // Get Seed tracks
+  // Get Seed tracks and cap at MAX_SEED_TRACKS
   var seedTracks = [];
-  seedTracksObj.forEach(function(track) {
-    seedTracks.push(track[SEED_TRACK_URI]);
+  seedTracksObj.forEach(function(track, index) {
+    if (index < MAX_SEED_TRACKS)
+      seedTracks.push(track[SEED_TRACK_URI]);
   });
 
   // Get recommendations
   return getRecommendations(accessToken, seedTracks, audioFeatureParams).
     then(function(recommendationsObj) {
 
-      // Prune recommendations object
+      // Prune recommendations object 
       var tracks = [];
-      recommendationsObj.body.tracks.forEach(function(track) {
+      recommendationsObj.body.tracks.forEach(function(track, index) {
         tracks.push(track[SEED_TRACK_URI]); 
       });
 
@@ -163,9 +165,7 @@ function getTopTracks(accessToken) {
   var spotifyApi = new SpotifyWebApi();
   spotifyApi.setAccessToken(accessToken);
 
-  // Pass optional params where limit = # of entities to return and
-  // time_range = over what time frame the affinities are computed
-  // (short_term = approximately the last 4 weeks)
+  // Pass optional params 
   var options = {'limit': '20', 'time_range': 'short_term'};
 
   // Return top tracks wrapped in a promise

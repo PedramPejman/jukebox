@@ -12,6 +12,8 @@ const SEED_TRACKS = 'seedTracks';
 const AUDIO_FEATURE_PARAMS = 'audioFeatureParams';
 const ACCESS_TOKEN = 'accessToken';
 const USER_ID = 'userId';
+const PLAYLIST_ID = 'playlistId';
+const PLAYLIST_URI = 'playlistUri';
 
 /**************** AppService RPC methods  *****************/
 
@@ -87,6 +89,27 @@ function generateJukebox(call, callback) {
       callback(error, null);
     });
 }
+
+/*
+ * Stub for the GetPlaylistUri RPC method
+ */
+function getPlaylistUri(call, callback) {
+  
+  // Unmarshall arguments
+  var id = call.request[PLAYLIST_ID];
+
+  console.log('Received GetPlaylistUri RPC with playlist id : ' + id);
+
+  app.getPlaylistUri(id).
+    then(function(uri) {
+      console.log(uri);
+      callback(null, uri);
+    }, function(err) {
+      console.log(err);
+      callback(err, null);
+    }); 
+}  
+
 /**************** HandshakeService RPC methods  *****************/
 
 /*
@@ -114,7 +137,8 @@ function main() {
   server.addProtoService(proto.AppService.service, {
     getInitialJukeboxState: getInitialJukeboxState,
     registerUser: registerUser,
-    generateJukebox: generateJukebox
+    generateJukebox: generateJukebox,
+    getPlaylistUri: getPlaylistUri
   });
 
   // Do initialization for app module

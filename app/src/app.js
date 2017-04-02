@@ -140,6 +140,19 @@ function generateJukebox(accessToken, userId,
   }, bubbleUpError);
 }
 
+/*
+ * Retrieves the playlist with the supplied id.
+ * Returns a promise containing the playlist uri.
+ */
+function getPlaylistUri(id) {
+  return db.getPlaylistUri(id).
+    then(function(uri) {
+      return {
+        [PLAYLIST_URI]: uri
+      };
+    }, bubbleUpError);
+}
+
 /************** Spotify API Wrappers ****************/
 
 /*
@@ -365,7 +378,8 @@ module.exports = {
   init: init,
   getInitialJukeboxState: getInitialJukeboxState,
   registerUser: registerUser,
-  generateJukebox: generateJukebox
+  generateJukebox: generateJukebox,
+  getPlaylistUri: getPlaylistUri
 };
 
 /*

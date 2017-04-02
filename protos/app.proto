@@ -27,6 +27,11 @@ service AppService {
    */
   rpc GenerateJukebox(JukeboxState) returns (Jukebox) {}
 
+  /*
+   * Given user-tuned JukeboxState, returns final version of
+   * the Jukebox object
+   */
+  rpc GetPlaylistUri(GetPlaylistUriRequest) returns (GetPlaylistUriResponse) {}
 }
 
 /*
@@ -76,6 +81,14 @@ message Jukebox {
   string playlistUri = 1;
   int32 playlistId = 2;
   string accessToken = 3;
+}
+
+message GetPlaylistUriRequest {
+  int32 playlistId = 1;
+}
+
+message GetPlaylistUriResponse {
+  string playlistUri = 2;
 }
 
 /********************* HandshakeService Entities *********************/

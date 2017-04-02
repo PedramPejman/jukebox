@@ -92,6 +92,12 @@ httpServer.get('/initialize', handler.initialize);
  */
 httpServer.post('/generate', handler.generate);
 
+/*
+ * Handles HTTP GET traffic on '/play'
+ * Returns Spotify playlist widget
+ */
+httpServer.get('/play', handler.play);
+
 /********************** Helpers **************************/
 
 /*

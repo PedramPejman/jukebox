@@ -212,7 +212,7 @@ function addPlaylist(userId, uri) {
                 if (error || results == undefined || results.length < 1) {
                   return reject(error);
                 }
-                id = results[0]['AUTO_INCREMENT']
+                id = results[0]['AUTO_INCREMENT'] - 1;
                 return fulfill(id);
               });
     });
@@ -257,7 +257,7 @@ function getPlaylistUri(id) {
 
           if (results === undefined || results.length == 0) {
             return reject(error ? error : 
-                "No results found for playlist with id" + id);
+                "No results found for playlist with id " + id);
           }
 
           return fulfill(results[0]['uri']);

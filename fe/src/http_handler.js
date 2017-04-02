@@ -16,6 +16,10 @@ const AUDIO_FEATURE_PARAMS = 'audioFeatureParams';
 const ACCESS_TOKEN = 'accessToken';
 const USER_ID = 'userId';
 
+// Jukebox member fields
+const PLAYLIST_URI = 'playlistUri';
+const PLAYLIST_ID = 'playlistId';
+
 // Audio Features
 const AUDIO_FEATURE_ACOUSTICNESS = 'acousticness';
 const AUDIO_FEATURE_DANCEABILITY = 'danceability';
@@ -144,8 +148,8 @@ exports.initialize = function(req, res) {
 }
 
 /*
- * Executes APP.GenerateJukebox RPC and returns 
- * resulting jukebox id.
+ * Executes APP.GenerateJukebox RPC and redirects
+ * the user to /play with the resulting jukebox id.
  */
 exports.generate = function(req, res) {
   if (!req.body[USER_ID] || !req.body[ACCESS_TOKEN])
@@ -172,17 +176,40 @@ exports.generate = function(req, res) {
   if (audioFeatures == {})
     return echoBack("No audio feature parameters were supplied", null, res);
 
-  // Make RPC to APP
+  // Make GenerateJukebox RPC call
   appClient.generateJukebox(accessToken, userId, 
       audioFeatures, seedTracks, function(err, resp) {
         if (err) {
           return echoBack(err, null, res);
         }
 
-        // TODO: Change to redirect
-        echoBack(null, resp, res);
+        // Redirect user to /play 
+        var playlistId = resp[PLAYLIST_ID];
+        res.redirect('/play?' + PLAYLIST_ID + '=' + playlistId);
       });
 };
+
+/*
+ * Executes APP.GetPlaylistUri RPC and shows user the
+ * corresponding Jukebox playlist widget.
+ */
+exports.play = function(req, res) {
+  if(!req.query[PLAYLIST_ID])
+    return echoBack("Playlist id was not provided", null, res);
+
+  var playlistId = parseInt(req.query[PLAYLIST_ID]);
+
+  // Make GetPlaylistUri RPC call
+  appClient.getPlaylistUri(playlistId, function(err, resp) {
+    if (err) {
+      return echoBack(err, null, res);
+    }
+
+    // Show the playlist widget
+    uri = encodeURIComponent(resp[PLAYLIST_URI]);
+    res.render('play', {'uri': uri});
+  });
+}
 
 /********************** Helpers *************************/
 

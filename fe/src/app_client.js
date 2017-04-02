@@ -57,6 +57,14 @@ function generateJukebox(accessToken, userId,
   appClient.generateJukebox(jukeboxState, callback);
 }
 
+function getPlaylistUri(playlistId, callback) {
+  getPlaylistUriRequest = {
+    [PLAYLIST_ID] : playlistId
+  };
+
+  appClient.getPlaylistUri(getPlaylistUriRequest, callback)
+}
+
 /*
  * Stub for the Shake RPC call
  */
@@ -71,7 +79,8 @@ module.exports = {
   shake: shake,
   getInitialJukeboxState: getInitialJukeboxState,
   registerUser: registerUser,
-  generateJukebox: generateJukebox
+  generateJukebox: generateJukebox,
+  getPlaylistUri: getPlaylistUri
 };
 
 /*

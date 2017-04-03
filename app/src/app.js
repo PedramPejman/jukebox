@@ -1,6 +1,5 @@
 var db = require('./db.js');
-
-var SpotifyWebApi = require('spotify-web-api-node');
+var spotify = require('./spotify.js');
 
 /****************** Constants *******************/
 
@@ -55,7 +54,7 @@ function getInitialJukeboxState(accessToken, userId) {
   var getSeedsAndFeatures = function(topTracksObj) {
     seedTracks = pruneTracks(topTracksObj.body.items);
     tracksIds = extractTracksIds(topTracksObj);
-    return getAudioFeatures(accessToken, tracksIds)
+    return spotify.getAudioFeatures(accessToken, tracksIds)
   };
 
   // Records top track and returns InitJBState
@@ -71,7 +70,7 @@ function getInitialJukeboxState(accessToken, userId) {
     }, bubbleUpError);
   };
 
-  return getTopTracks(accessToken)
+  return spotify.getTopTracks(accessToken)
     .then(getSeedsAndFeatures, bubbleUpError)
     .then(recordAndGetInitState, bubbleUpError);
 }
@@ -81,7 +80,7 @@ function getInitialJukeboxState(accessToken, userId) {
  * Returns a promise containing the complete authCreds object 
  */
 function registerUser(accessToken) {
-  return getMe(accessToken).
+  return spotify.getMe(accessToken).
     then(function(userObject) {
       id = userObject.body[ID];
       return db.addUser(id, accessToken).then(function() {
@@ -107,7 +106,7 @@ function generateJukebox(accessToken, userId,
   });
 
   // Get recommendations
-  return getRecommendations(accessToken, seedTracks, audioFeatureParams).
+  return spotify.getRecommendations(accessToken, seedTracks, audioFeatureParams).
     then(function(recommendationsObj) {
 
       // Prune recommendations object 
@@ -117,12 +116,12 @@ function generateJukebox(accessToken, userId,
       });
 
       // Create playlist for user
-      return createPlaylist(accessToken, userId, DEFAULT_PLAYLIST_NAME).
+      return spotify.createPlaylist(accessToken, userId, DEFAULT_PLAYLIST_NAME).
         then(function(playlist) {
 
           // Add tracks to playlist
           var spotifyPlaylistId = playlist.body.id;
-          return addTracksToPlaylist(accessToken, userId, spotifyPlaylistId, tracks).
+          return spotify.addTracksToPlaylist(accessToken, userId, spotifyPlaylistId, tracks).
             then(function() {
 
               // Add playlist to database
@@ -153,99 +152,6 @@ function getPlaylistUri(id) {
         [PLAYLIST_URI]: uri
       };
     }, bubbleUpError);
-}
-
-/************** Spotify API Wrappers ****************/
-
-/*
- * Returns a promise containing json-encoded list of user's top tracks
- */
-function getTopTracks(accessToken) {
-  // Instatiate api instance and set its accessToken
-  var spotifyApi = new SpotifyWebApi();
-  spotifyApi.setAccessToken(accessToken);
-
-  // Pass optional params 
-  var options = {'limit': '20', 'time_range': 'short_term'};
-
-  // Return top tracks wrapped in a promise
-  return spotifyApi.getMyTopTracks(options);
-}
-
-/*
- * Returns a promise containing json-encoded set of features for 
- * every track in trackIds
- */
-function getAudioFeatures(accessToken, trackIds) {
-  // Instatiate api instance and set its accessToken
-  var spotifyApi = new SpotifyWebApi();
-  spotifyApi.setAccessToken(accessToken);
-
-  // Return audio features wrapped in a promise
-  return spotifyApi.getAudioFeaturesForTracks(trackIds);
-}
-
-/*
- * Returns a promise containing json-encoded User object
- */
-function getMe(accessToken) {
-  // Instatiate api instance and set its accessToken
-  var spotifyApi = new SpotifyWebApi();
-  spotifyApi.setAccessToken(accessToken);
-
-  // Return audio features wrapped in a promise
-  return spotifyApi.getMe();
-}
-
-/*
- * Returns a promise containing json-encoded Recommendations object
- */
-function getRecommendations(accessToken,
-    seedTracks, audioFeatureParams) {
-  // Instatiate api instance and set its accessToken
-  var spotifyApi = new SpotifyWebApi();
-  spotifyApi.setAccessToken(accessToken);
-
-  // Build options
-  var options = {};
-  options['seed_tracks'] = seedTracks;
-  if (audioFeatureParams != undefined) {
-    Object.keys(audioFeatureParams).forEach(function(key, index, _array) {
-      this['target_' + key] = audioFeatureParams[key];
-    }, options);
-  }
-
-  // Return recommendations wrapped in a promise
-  return spotifyApi.getRecommendations(options);
-}
-
-/*
- * Returns a promise containing json-encoded Playlist object
- */
-function createPlaylist(accessToken, userId, name) {
-  // Instatiate api instance and set its accessToken
-  var spotifyApi = new SpotifyWebApi();
-  spotifyApi.setAccessToken(accessToken);
-
-  // Use Jukebox as name if no name supplied
-  if (name === undefined || name == '') name = 'Jukebox';
-
-  // Create playlist and return object wrapped in a promise
-  return spotifyApi.createPlaylist(userId, name);
-}
-
-/*
- * Returns a promise containing json-encoded Snapshot object
- */
-function addTracksToPlaylist(accessToken, userId, 
-    playlistId, tracks) {
-  // Instatiate api instance and set its accessToken
-  var spotifyApi = new SpotifyWebApi();
-  spotifyApi.setAccessToken(accessToken);
-
-  // Create playlist and return object wrapped in a promise
-  return spotifyApi.addTracksToPlaylist(userId, 
-      playlistId, tracks);
 }
 
 /****************** Helpers ********************/

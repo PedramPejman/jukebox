@@ -1,10 +1,14 @@
 GEN_PROTOS=./gen/src/
 
+deploy: .FORCE
+	./k8/*/setup.sh
+
 build-fe: .FORCE
 	cp -rf protos fe
 
 build-app: .FORCE
 	cp -rf protos app
+
 
 all: build
 

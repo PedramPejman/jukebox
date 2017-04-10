@@ -20,5 +20,8 @@ ENV GEN_RPC_PORT 35000
 # Expose port for HTTP traffic
 EXPOSE ${APP_RPC_PORT}
 
-# Start the server
-CMD [ "node", "./src/server.js" ]
+# Set entrypoint to allow for different execution modes
+ENTRYPOINT ["npm"]
+
+# Start the server if no other arguments given
+CMD [ "start" ]

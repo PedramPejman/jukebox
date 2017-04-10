@@ -4,11 +4,17 @@ node {
   def appName = 'jb-app'
   def imageTag = "${author}/${appName}:latest"
 
+  def dockerUser = "${env.DOCKER_USERNAME}"
+  def dockerPass = "${env.DOCKER_PASSWORD}"
+
   checkout scm
 
   stage 'Build image'
-  sh("docker login -u pedrampejman -p Peji20??d")
+  sh("docker login -u ${dockerUser} -p ${dockerPass}")
   sh("docker build -t ${imageTag} ./app/")
+
+  stage 'Test build'
+  sh("docker run ${imageTag} test")
 
   stage 'Push image to registry'
   sh("docker push ${imageTag}")

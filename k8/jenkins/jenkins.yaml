@@ -31,6 +31,16 @@ spec:
             secretKeyRef:
               name: jenkins
               key: options
+        - name: DOCKER_USERNAME 
+          valueFrom:
+            secretKeyRef:
+              name: docker 
+              key: username
+        - name: DOCKER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: docker
+              key: password
         volumeMounts:
         - mountPath: /var/jenkins_home
           name: jenkins-home

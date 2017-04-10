@@ -15,39 +15,55 @@ cache:
 services:
   - docker
 
-# Set env vars
+# Set envrionment variables
 env:
   global:
     - GOOGLE_APPLICATION_CREDENTIALS=~/gcloud-service-key.json
-		- AUTHOR=pedrampejman
-    - PROJECT_NAME_PRD=jukebox
-    - CLUSTER_NAME_PRD=jukebox-alpha
-    - CLOUDSDK_COMPUTE_ZONE=us-east1-d
-    - DOCKER_IMAGE_NAME=jb-app
-    - KUBE_DEPLOYMENT_NAME=jb-app
-    - KUBE_DEPLOYMENT_CONTAINER_NAME=jb-app
+    - AUTHOR=pedrampejman
     - NODE_ENV=CI
+      # Service directories
+    - APP_DIR=app
+    - FE_DIR=fe
+    - GEN_DIR=gen
+      # Kubernetes configuration
+    - CLOUDSDK_COMPUTE_ZONE=us-east1-d
+    - PROJECT_NAME=jukebox-161404
+    - CLUSTER_NAME_PRD=jukebox-alpha
+      # Image names
+    - APP_IMAGE_NAME=jb-app
+    - FE_IMAGE_NAME=jb-app
+    - GEN_IMAGE_NAME=jb-gen
+      # Container names
+    - APP_CONTAINER_NAME=jb-app
+    - FE_CONTAINER_NAME=jb-fe
+    - GEN_CONTAINER_NAME=jb-gen
+      # Deployment names
+    - APP_DEPLOYMENT_NAME=jb-app
+    - FE_DEPLOYMENT_NAME=jb-fe
+    - GEN_DEPLOYMENT_NAME=jb-gen
 
+# Build each service individually
 install:
-  - npm install --path app
+  - npm --silent --prefix ./$APP_DIR install ./$APP_DIR
+  - npm --silent --prefix ./$FE_DIR install ./$FE_DIR
 
+# Run unit tests
+# TODO: Run integration tests
 script:
-  - npm test
+  - npm --silent --prefix ./$APP_DIR test ./$APP_DIR
 
+# Set up for deployment
 before_deploy:
   - if [ ! -d "$HOME/google-cloud-sdk/bin" ]; then rm -rf $HOME/google-cloud-sdk; export CLOUDSDK_CORE_DISABLE_PROMPTS=1; curl https://sdk.cloud.google.com | bash; fi
   - source /home/travis/google-cloud-sdk/path.bash.inc
   - gcloud --quiet version
   - gcloud --quiet components update
-  - gcloud --quiet components beta update
   - gcloud --quiet components update kubectl
 
+# Deploy to production 
 deploy:
   - provider: script
-    script: ./deploy.sh
+    script: etc/deploy.sh
     skip_cleanup: true
     on:
-      branch: master
-  - provider: script
-    script: ./etc/deploy.sh
-    skip_cleanup: true
+      all_branches: true

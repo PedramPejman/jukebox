@@ -9,11 +9,11 @@ echo "Deleteing secrets..."
 kubectl delete secret tls jenkins docker --namespace jenkins 
 
 # Delete services
-echo "Deleting jenkins deployments..."
+echo "Delteing UI and discovery services..."
 kubectl delete -f service-jenkins.yaml
 
 # Delete deployments
-echo "Delteing UI and discovery services..."
+echo "Deleting jenkins deployments..."
 kubectl delete -f jenkins.yaml
 
 # Delete jenkins namespace

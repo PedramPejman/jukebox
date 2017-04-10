@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Compute cwd
+CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"\
+
 # Delete secrets
 echo "Deleting secrets..."
 kubectl delete secret \
@@ -8,8 +11,8 @@ kubectl delete secret \
 
 # Delete application service
 echo "Deleting application service..."
-kubectl delete -f service-jb-app.yaml 
+kubectl delete -f $CWD/service-jb-app.yaml 
 
 # Delete application
 echo "Deleting application deployment..."
-kubectl delete -f jb-app.yaml
+kubectl delete -f $CWD/jb-app.yaml

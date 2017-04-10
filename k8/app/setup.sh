@@ -3,6 +3,16 @@
 # This script sets up the application deployment
 # and service.
 
+# Compute current directory and append secret file name to it
+CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROXY_SECRET="${CWD}/proxy-secret-key"
+
+# Check if proxy secret json file exists
+if [ ! -f $PROXY_SECRET ]; then
+  echo "Cloudsql proxy credentials file (proxy-secret-key) not found"
+  exit 1;
+fi
+
 # Check if environment variables exist
 echo "Checking for required environment variables..."
 if [[ -z "$DB_USERNAME" || -z "$DB_PASSWORD" ]]; 
@@ -20,12 +30,12 @@ kubectl create secret generic cloudsql-db-credentials \
 # Upload cloudsql instance private key secret to kubernetes
 echo "Creating cloudsql instance credentials secret..."
 kubectl create secret generic cloudsql-instance-credentials \
-  --from-file=credentials.json=./proxy-secret-key
+  --from-file=credentials.json=$PROXY_SECRET
 
 # Create app deployment
 echo "Creating deployment for application..."
-kubectl apply -f ./jb-app.yaml
+kubectl apply -f $CWD/jb-app.yaml
 
 # Create app service
 echo "Creating the appliction service..."
-kubectl apply -f service-jb-app.yaml
+kubectl apply -f $CWD/service-jb-app.yaml

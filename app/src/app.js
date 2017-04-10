@@ -146,6 +146,8 @@ function generateJukebox(accessToken, userId,
  * Returns a promise containing the playlist uri.
  */
 function getPlaylistUri(id) {
+  if (id == undefined) return new Promise.reject();
+
   return db.getPlaylistUri(id).
     then(function(uri) {
       return {

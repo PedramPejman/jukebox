@@ -21,6 +21,7 @@ env:
     - GOOGLE_APPLICATION_CREDENTIALS=~/gcloud-service-key.json
     - AUTHOR=pedrampejman
     - NODE_ENV=CI
+    - TAG=latest
       # Service directories
     - APP_DIR=app
     - FE_DIR=fe
@@ -31,7 +32,7 @@ env:
     - CLUSTER_NAME_PRD=jukebox-alpha
       # Image names
     - APP_IMAGE_NAME=jb-app
-    - FE_IMAGE_NAME=jb-app
+    - FE_IMAGE_NAME=jb-fe
     - GEN_IMAGE_NAME=jb-gen
       # Container names
     - APP_CONTAINER_NAME=jb-app
@@ -42,15 +43,21 @@ env:
     - FE_DEPLOYMENT_NAME=jb-fe
     - GEN_DEPLOYMENT_NAME=jb-gen
 
-# Build each service individually
+# Build services
 install:
-  - npm --silent --prefix ./$APP_DIR install ./$APP_DIR
-  - npm --silent --prefix ./$FE_DIR install ./$FE_DIR
+    # Install grpcio so that we can build protos for Genius
+  - export PATH=$HOME/.local/bin:$PATH
+  - pip install -r ${GEN_DIR}/requirements.txt --user `whoami`
+    # Build project-wide dependencies
+  - make build
+    # Build each service individually
+  - docker build -t ${AUTHOR}/${APP_IMAGE_NAME}:$TAG -f ${APP_DIR}/Dockerfile ${APP_DIR} 
+  - docker build -t ${AUTHOR}/${FE_IMAGE_NAME}:$TAG -f ${FE_DIR}/Dockerfile ${FE_DIR}
+  - docker build -t ${AUTHOR}/${GEN_IMAGE_NAME}:$TAG -f ${GEN_DIR}/Dockerfile ${GEN_DIR}
 
 # Run unit tests
-# TODO: Run integration tests
 script:
-  - npm --silent --prefix ./$APP_DIR test ./$APP_DIR
+  - docker run ${AUTHOR}/${APP_IMAGE_NAME}:$TAG test
 
 # Set up for deployment
 before_deploy:

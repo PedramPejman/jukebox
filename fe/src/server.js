@@ -4,9 +4,12 @@ var PORT = process.env.FE_HTTP_PORT || '8080';
 var IS_PROD = process.env.ENVIRONMENT == 'production';
 
 var express = require('express'),
+<<<<<<< Updated upstream
     request = require('request'),
     sassMiddleware = require('node-sass-middleware'),
     bodyParser = require('body-parser'),
+=======
+>>>>>>> Stashed changes
     httpServer = express();
 
 var APP_ROOT = __dirname;

@@ -1,7 +1,17 @@
 import pandas as pd
-from sklearn import preprocessing
 import numpy as np
 
+from sklearn.prepocessing import scale
+from sklearn.preprocessing import Imputer
+
+# Track identifiers
+URI = 'uri'
+NAME = 'name'
+ALBUM = 'album'
+POPULARITY = 'popularity'
+ARTIST = 'artist'
+
+# Track audio features
 ACOUSTICNESS = 'acousticness'
 DANCEABILITY = 'danceability'
 ENERGY = 'energy'
@@ -13,16 +23,21 @@ TEMPO = 'tempo'
 VALENCE = 'valence'
 
 REQUIRED_ATTRIBUTES = [
+        URI, NAME, ALBUM, POPULARITY, ARTIST,
         ACOUSTICNESS, DANCEABILITY, ENERGY,
         INSTRUMENTALNESS, LIVENESS, LOUDNESS,
         SPEECHINESS, TEMPO, VALENCE]
 
+# Derived attribute names
+RELATED_ARTISTS = 'related-artists'
+
+# Derived attributes parameters
+RELATED_ARTISTS_STRONG = 2
+RELATED_ARTISTS_MEDIUM = 1
+RELATED_ARTISTS_WEAK = 0
+
 # TODO: Fix style issue (tab->4 spaces)
 def select_best_tracks(potential_tracks, seed_tracks, feature_params):
-
-    #unwanted_columns = ['uri', 'duration_ms', 'key', 'mode', 'time_signature']
-    unwanted_columns = ['uri']
-    data = raw_data.drop(unwanted_columns, axis=1)
 
     #seed_track_names = ['Broccoli', 'Tiimmy Turner', 'One Dance']
     seed_track_names = ["She's Mine Pt. 2", 'Wicked Games', 'Crew Love']
@@ -33,21 +48,6 @@ def select_best_tracks(potential_tracks, seed_tracks, feature_params):
                      'liveness':0.2, 'loudness':-2, 'speechiness':0.1, 'tempo':100, 'valence':0.3,
                      'novelty':0.5, 'popularity': 70}
 
-    ############ process starts ##############
-    # TODO: Better naming
-    mapping_row = pd.Series(['test', 'test', 'test', seed_audio_levels['acousticness'], seed_audio_levels['danceability'],
-                            seed_audio_levels['energy'], seed_audio_levels['instrumentalness'],
-                            seed_audio_levels['liveness'], seed_audio_levels['loudness'],
-                            seed_audio_levels['speechiness'], seed_audio_levels['tempo'],
-                            seed_audio_levels['valence'], seed_audio_levels['popularity']],
-                            index = data.columns, name='mapping_row')
-
-    data=data.append(mapping_row)
-
-    #scale data to have zero mean and unit variance
-    for column in data.columns:
-        if data[column].dtype == np.float64 or data[column].dtype == np.int64:
-            data[column] = preprocessing.scale(data[column])
 
     # TODO: Take out
     related_artists = ['The Weeknd', 'Future', 'G-Eazy', 'Frank Ocean', 'Wiz Khalifa', 'Pusha T', 'A$AP Ferg',
@@ -128,11 +128,41 @@ def create_data_frame(raw_data):
     ''' Returns DataFrame object with only the required attributes '''
     return pd.DataFrame(data=raw_data, columns=REQUIRED_ATTRIBUTES)
 
-def pre_process(cleaned_data, initial_attributes):
-    pass
+def pre_process(cleaned_df, initial_attributes):
+    ''' Returns DataFrame object with normalized attributes '''
+    target_df = pd.DataFrame(initial_attributes, [0], columns=REQUIRED_ATTRIBUTES)
+    df = cleaned_df.append(target_df, ignore_index=True)
 
-def process(cleaned_data, related_artists):
-    pass
+    # Impute missing values
+    imp = Imputer(
+
+    # Scale data to have zero mean and unit variance
+    for column in df.columns:
+        if (df[column].dtype == np.float64 or df[column].dtype == np.int64) and df[column]:
+            print(column, end=" ")
+            print(df[column])
+            df[column] = preprocessing.scale(df[column])
+
+    return df
+    
+def process(df, seed_tracks, related_artists):
+    
+    
+    # Compute set of artsts
+    artists = set([track[ARTIST] for track in seed_tracks])
+    
+    related_artists_values = []
+    for row in df[ARTIST]:
+        if row in artists:
+            related_artists_values.append(RELATED_ARTISTS_STRONG)
+        elif row in related_artists:
+            related_artists_values.append(RELATED_ARTISTS_MEDIUM)
+        else:
+            related_artists_values.append(RELATED_ARTISTS_WEAK)
+
+    df[RELATED_ARTISTS] = related_artists_values
+    print(artists)
+    print(df)
 
 def select_top_n_tracks(processed_data, n):
     pass
@@ -140,11 +170,13 @@ def select_top_n_tracks(processed_data, n):
 def select_top_tracks():
     raw_data = [
         {
-            ACOUSTICNESS: .6,
+            ARTIST : 'artist3',
+            ACOUSTICNESS : .6,
             ENERGY : .6,
             'unwanted' : .7
         },
         {
+            ARTIST : 'artist1',
             ACOUSTICNESS: .8,
             ENERGY : .7
         }]
@@ -152,13 +184,23 @@ def select_top_tracks():
             ACOUSTICNESS: .1,
             ENERGY: .9
         }
-    related_artists = []
+    seed_tracks = [
+        {
+            URI : 'uri1',
+            ARTIST: 'artist1',
+            ENERGY : .4
+        },
+        {
+            URI : 'uri2',
+            ARTIST : 'artist2',
+            ENERGY : .6
+        }]
+    related_artists = ['artist1']
     n = 10
 
-    df = create_data_frame(raw_data)
-    preprocessed_data = pre_process(df, initial_attributes)
-
-    processed_data = process(cleaned_data, related_artists)
+    cleaned_df = create_data_frame(raw_data)
+    preprocessed_df = pre_process(cleaned_df, initial_attributes)
+    processed_data = process(cleaned_df, seed_tracks, related_artists)
     selected_tracks = select_top_n_tracks(processed_data, n)
 
 def main():

@@ -5,10 +5,10 @@ set -e
 echo "Building the Application image..."
 docker build -t ${AUTHOR}/${APP_IMAGE_NAME}:$TRAVIS_COMMIT -f ${APP_DIR}/Dockerfile ${APP_DIR}
 
-#echo "Building the Frontend image..."
+echo "Building the Frontend image..."
 docker build -t ${AUTHOR}/${FE_IMAGE_NAME}:$TRAVIS_COMMIT -f ${FE_DIR}/Dockerfile ${FE_DIR}
 
-#echo "Building the Genius image..."
+echo "Building the Genius image..."
 docker build -t ${AUTHOR}/${GEN_IMAGE_NAME}:$TRAVIS_COMMIT -f ${GEN_DIR}/Dockerfile ${GEN_DIR}
 
 echo "Creating gcloud service key..."

@@ -1,0 +1,37 @@
+// Creates an audio feature input card
+mixin audio-feature-card(feature, value)
+  div.feature-card
+    h3.name= feature
+    input(type='range', class='feature-input' id=feature+'-input', min='0', 
+    max=(feature == 'tempo' ? '200' : '100'), value= value, name=feature)
+    span(id= feature + '-output', class='feature-output')= value
+
+// Creates a track input card with artist, track name and album art cover
+mixin track-card(track)
+  div.track-card
+    input(type='checkbox', class='track-input', name=track.uri)
+    img.track-cover(src=track.image)
+    span.track-info= '   ' + track.artist + ' - ' + track.name 
+
+doctype html
+html
+  head
+    title Initialize
+    link(rel='stylesheet', type='text/css', href='base.css')
+    script(src='//ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js')
+    script(src='initialize.js')
+  body
+    .main-container
+      .title Jukebox 
+      .subtitle Alpha (v.0.2)
+      .content
+        form(method='POST' action='/generate')
+          .column.widget
+            for track in seedTracks
+              +track-card(track)
+          .column.sliders
+            for value, feature in audioFeatureParams
+              +audio-feature-card(feature, value)
+          input(type='hidden', name='accessToken', value=accessToken)
+          input(type='hidden', name='userId', value=userId)
+          button#generate-button(type='submit') Generate Jukebox

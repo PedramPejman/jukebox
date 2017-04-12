@@ -8,30 +8,55 @@ package app;
  * App service exposing RPC call to get the initial Jukebox state
  */
 service AppService {
-  rpc GetInitialJukeboxState(AuthCreds) returns (InitialJukeboxState) {}
-  rpc RegisterUser(AuthCreds) returns (GenResponse) {}
+
+  /* 
+   * Given Spotify Authentication information, returns an initial
+   * JukeboxState object, containing seed tracks and default parameters
+   */
+  rpc GetInitialJukeboxState(AuthCreds) returns (JukeboxState) {}
+  
+  /*
+   * Registers the user with given Spotify Auth info in Jukebox database.
+   * Returns the complete AuthCreds object.
+   */
+  rpc RegisterUser(AuthCreds) returns (AuthCreds) {}
+
+  /*
+   * Given user-tuned JukeboxState, returns final version of
+   * the Jukebox object
+   */
+  rpc GenerateJukebox(JukeboxState) returns (Jukebox) {}
+
+  /*
+   * Given user-tuned JukeboxState, returns final version of
+   * the Jukebox object
+   */
+  rpc GetPlaylistUri(GetPlaylistUriRequest) returns (GetPlaylistUriResponse) {}
 }
 
 /*
  * Spotify auth credentials needed for privileged API calls 
  */ 
 message AuthCreds {
-  string access_token = 1;
+  string accessToken = 1;
+  string userId = 2;
 }
 
 /*
- * Describes the initial state of a Jukebox instance
+ * Describes the state of a Jukebox instance
  */
-message InitialJukeboxState {
+message JukeboxState {
   repeated SeedTrack seedTracks = 1;
-  DefaultParams defaultParams = 2; 
+  AudioFeatureParams audioFeatureParams = 2; 
+  string accessToken = 3;
+  string userId = 4;
 }
 
 /*
  * Represents a single potential seed track 
  */
 message SeedTrack {
-  string id = 1;
+  string uri = 1;
   string name = 2;
   string artist = 3;
   string album = 4;
@@ -39,9 +64,9 @@ message SeedTrack {
 }
 
 /*
- * Represents the default audio feature parameters
+ * Represents the audio feature parameters
  */
-message DefaultParams {
+message AudioFeatureParams {
   float acousticness = 1;
   float danceability = 2;
   float energy = 3;
@@ -50,10 +75,20 @@ message DefaultParams {
 }
 
 /*
- * Represents generic RPC response with optional message;
+ * Describes a final Jukebox instance
  */
-message GenResponse {
-  string message = 1;
+message Jukebox {
+  string playlistUri = 1;
+  int32 playlistId = 2;
+  string accessToken = 3;
+}
+
+message GetPlaylistUriRequest {
+  int32 playlistId = 1;
+}
+
+message GetPlaylistUriResponse {
+  string playlistUri = 2;
 }
 
 /********************* HandshakeService Entities *********************/

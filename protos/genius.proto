@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package genius;
+
+/********************* Handshake Service Entities *********************/
+
+service Handshake {
+  rpc Shake(HandshakeRequest) returns (HandshakeResponse) {}
+}
+
+message HandshakeRequest {
+  string name = 1;
+}
+
+message HandshakeResponse {
+  string message = 1;
+}

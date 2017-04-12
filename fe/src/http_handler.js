@@ -3,14 +3,46 @@ var appClient = require('./app_client.js'),
 
 var CLIENT_ID = process.env.CLIENT_ID || 'c99f31ef396d40ffb498f24d1803b17f',
     FE_HTTP_HOST = process.env.FE_HTTP_HOST || 'http://jukebox.life',
-    CLIENT_SECRET = process.env.CLIENT_SECRET || fatal("No CLIENT_SECRET");
+    CLIENT_SECRET = process.env.CLIENT_SECRET || fatal("No CLIENT_SECRET"),
+    IS_PROD = process.env.ENVIRONMENT == 'production';
+
+// HTTP.GET parameters
+const PARAM_ACCESS_TOKEN = 'access_token';
+const PARAM_USER_ID = 'user_id';
+
+// JukeboxState member fields
+const SEED_TRACKS = 'seedTracks';
+const AUDIO_FEATURE_PARAMS = 'audioFeatureParams';
+const ACCESS_TOKEN = 'accessToken';
+const USER_ID = 'userId';
+
+// Jukebox member fields
+const PLAYLIST_URI = 'playlistUri';
+const PLAYLIST_ID = 'playlistId';
+
+// Audio Features
+const AUDIO_FEATURE_ACOUSTICNESS = 'acousticness';
+const AUDIO_FEATURE_DANCEABILITY = 'danceability';
+const AUDIO_FEATURE_ENERGY = 'energy';
+const AUDIO_FEATURE_TEMPO = 'tempo';
+const AUDIO_FEATURE_VALENCE = 'valence';
+
+// Audiofeature Parameter fields
+// TODO: obtain from proto definitions 
+const AUDIO_FEATURE_FIELDS = [
+  AUDIO_FEATURE_ACOUSTICNESS,
+  AUDIO_FEATURE_DANCEABILITY,
+  AUDIO_FEATURE_ENERGY,
+  AUDIO_FEATURE_TEMPO,
+  AUDIO_FEATURE_VALENCE];
+
 /*  
  * Redirects user to Spotify authroization endpoint
  */
 exports.home = function (req, res) {
   
   // Set scopes, response type, and redirect uri
-  var scopes = 'user-top-read';
+  var scopes = 'user-top-read playlist-modify-public playlist-modify-public';
   var responseType = 'code';
   var redirectUri = FE_HTTP_HOST + '/auth-callback';
 
@@ -28,31 +60,17 @@ exports.home = function (req, res) {
 exports.authCallback = function (req, res) {
   // Check if authorization code was supplied by Spotify API
   if (req.query.code) {
-    var code = req.query.code;
-    var grantType = 'authorization_code';
-    var redirectUri = FE_HTTP_HOST + '/auth-callback';
-    var authUrl = 'https://accounts.spotify.com/api/token';
-    
-    var options = {
-      url : authUrl,
-      method : "POST",
-      json : true,
-      form : {
-        grant_type : grantType,
-        code : code,
-        redirect_uri : encodeURIComponent(redirectUri),
-        client_id : CLIENT_ID,
-        client_secret : CLIENT_SECRET
-      }
-    };
+    // Create GET request options
+    var options = buildOptionsForAccessTokenRequest(req.query.code);
 
-    // Call Spotify API to obtain access token
+    // Call Spotify API to obtain access token and redirect to init
     request(options, function(err, resp, body) {
-      // Extract access code and make getInitJBState RPC
-      getAccessCodeCallback(res, err, resp, body);
+      registerUserAndRedirectToInit(res, err, resp, body);
     });
 
-
+  // For development, allow direct receipt of access token
+  } else if (!IS_PROD && req.query.access_token) {
+    registerUserAndRedirectToInit(res, null, res, req.query);
   } else {
     console.log("code was not supplied.");
     // TODO: Replace with error page redirect
@@ -94,6 +112,105 @@ exports.homeView = function(req, res) {
   res.render('homeView');
 };
 
+/*
+ * Executes APP.GetInitialJukeboxState RPC and returns
+ * resulting JukeboxState to user
+ */
+exports.initialize = function(req, res) {
+  if (!req.query[PARAM_ACCESS_TOKEN] || !req.query[PARAM_USER_ID]) {
+    // TODO: Replace with error page
+    return echoBack('Required parameters not supplied', null, res);
+  }
+
+  var accessToken = req.query[PARAM_ACCESS_TOKEN];
+  var userId = req.query[PARAM_USER_ID];
+
+  // Make RPC to obtain initial Jukebox state
+  appClient.getInitialJukeboxState(accessToken, userId, function(err, resp) {
+    if (err) {
+      return echoBack(err, null, res);
+    }
+
+    var seedTracks = resp[SEED_TRACKS];
+    var features = resp[AUDIO_FEATURE_PARAMS];
+
+    // Prepare audio feature params for presentation
+    Object.keys(features).forEach(function(feature) {
+      features[feature] = transformAudioFeatureForUI(feature, features[feature]);
+    });
+
+    res.render('initialize', {
+      [SEED_TRACKS] : seedTracks,
+      [AUDIO_FEATURE_PARAMS]: features,
+      [ACCESS_TOKEN]: accessToken,
+      [USER_ID]: userId});
+  });
+}
+
+/*
+ * Executes APP.GenerateJukebox RPC and redirects
+ * the user to /play with the resulting jukebox id.
+ */
+exports.generate = function(req, res) {
+  if (!req.body[USER_ID] || !req.body[ACCESS_TOKEN])
+    return echoBack("Request parameters not provided", null, res);
+
+  var userId = req.body[USER_ID];
+  var accessToken = req.body[ACCESS_TOKEN];
+  var audioFeatures = {};
+  var seedTracks = [];
+
+  // Clean parameters for RPC
+  Object.keys(req.body).forEach(function(param) {
+    if (AUDIO_FEATURE_FIELDS.indexOf(param) > -1)
+      audioFeatures[param] = transformAudioFeatureForBackend(param, req.body[param]);
+    else if (param != USER_ID && param != ACCESS_TOKEN)
+      // TODO: Encapsulate in separate Request/Response in protos
+      seedTracks.push({'uri': param.split(":")[2]});
+  });
+
+  // Make sure we have appropriate request parameters
+  // TODO: Replace with error page
+  if (seedTracks.length == 0) 
+    return echoBack("No seed tracks selected", null, res);
+  if (audioFeatures == {})
+    return echoBack("No audio feature parameters were supplied", null, res);
+
+  // Make GenerateJukebox RPC call
+  appClient.generateJukebox(accessToken, userId, 
+      audioFeatures, seedTracks, function(err, resp) {
+        if (err) {
+          return echoBack(err, null, res);
+        }
+
+        // Redirect user to /play 
+        var playlistId = resp[PLAYLIST_ID];
+        res.redirect('/play?' + PLAYLIST_ID + '=' + playlistId);
+      });
+};
+
+/*
+ * Executes APP.GetPlaylistUri RPC and shows user the
+ * corresponding Jukebox playlist widget.
+ */
+exports.play = function(req, res) {
+  if(!req.query[PLAYLIST_ID])
+    return echoBack("Playlist id was not provided", null, res);
+
+  var playlistId = parseInt(req.query[PLAYLIST_ID]);
+
+  // Make GetPlaylistUri RPC call
+  appClient.getPlaylistUri(playlistId, function(err, resp) {
+    if (err) {
+      return echoBack(err, null, res);
+    }
+
+    // Show the playlist widget
+    uri = encodeURIComponent(resp[PLAYLIST_URI]);
+    res.render('play', {'uri': uri});
+  });
+}
+
 /********************** Helpers *************************/
 
 /*
@@ -105,34 +222,84 @@ function fatal(message) {
 }
 
 /*
- * Called in auth-callback 
- * Extracts access token and makes getInitialJikeboxState RPC
+ * Called in auth-callback
+ * Creates the options for access token GET request
  */
-function getAccessCodeCallback(res, error, response, body) {
-      if (!error && response.statusCode == 200) {
-
-        // Retrieve access token
-        accessToken = body.access_token; 
-
-        // Make RPC to obtain initial Jukebox state
-        // TODO: Make more readable by using templated error routines
-        appClient.getInitialJukeboxState(accessToken, function(err, resp) {
-          if (err) { 
-            res.send(err);
-            console.log(err);
-          } else {
-            res.send(resp);
-            console.log(resp);
-          }
-        });
-      } else {
-        // Echo error back appropriately
-        if (error) {
-          console.log(error);
-          res.end("Error: " + error);
-        } else {
-          console.log(response);
-          res.end("Request did not receive 200");
-        }
-      }
+function buildOptionsForAccessTokenRequest(code) {
+  var grantType = 'authorization_code';
+  var redirectUri = FE_HTTP_HOST + '/auth-callback';
+  var authUrl = 'https://accounts.spotify.com/api/token';
+  
+  return {
+    url : authUrl,
+    method : "POST",
+    json : true,
+    form : {
+      grant_type : grantType,
+      code : code,
+      redirect_uri : encodeURIComponent(redirectUri),
+      client_id : CLIENT_ID,
+      client_secret : CLIENT_SECRET
     }
+  };
+}
+
+/*
+ * Called in auth-callback 
+ * Extracts access token, makes RegisterUser RPC and
+ * Redirects user to /initialize
+ */
+function registerUserAndRedirectToInit(res, error, response, body) {
+  if (error || response.statusCode != 200) {
+    echoBack(error, response, res);
+  } else {
+
+    // Retrieve access token
+    accessToken = body.access_token; 
+
+    // Make RPC to register user
+    appClient.registerUser(accessToken, function(err, authCreds) {
+			if (err) {
+				return echoBack(err, null, res);
+			}	
+      userId = authCreds[USER_ID];
+      res.redirect('/initialize?' + PARAM_USER_ID + '=' + userId 
+          + '&' + PARAM_ACCESS_TOKEN + '=' + accessToken);
+    });
+  }
+}
+
+/*
+ * Template callback - writes err/resp to pipe and logs to console
+ */
+function echoBack(err, resp, pipe) {
+  if (err) { 
+    pipe.send(err);
+    console.log(err);
+  } else {
+    pipe.send(resp);
+    console.log(resp);
+  }
+}
+
+/*
+ * Transforms the scale of an audio feature
+ * to an easy, human-readable value. Tempo is rounded and
+ * all other features are transformed from [0,1) to [0,100)
+ */
+function transformAudioFeatureForUI(feature, featureValue) {
+  if (feature == AUDIO_FEATURE_TEMPO) 
+    return Math.round(featureValue);
+  return Math.round(featureValue * 100);
+}
+
+/*
+ * Undoes the transformation in transformAudioFeatureForUI()
+ * to its real scale for backend use.
+ */
+function transformAudioFeatureForBackend(feature, featureValue) {
+  featureValue = parseInt(featureValue);
+  if (feature == AUDIO_FEATURE_TEMPO)
+    return featureValue;
+  return (featureValue / 100.0);
+}

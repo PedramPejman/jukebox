@@ -18,8 +18,13 @@ spec:
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: cloudsql
+                  name: cloudsql-db-credentials
                   key: username
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql-db-credentials
+                  key: password
           ports:
             - containerPort: 34000
               name: jb-app-server
@@ -31,7 +36,7 @@ spec:
                     "-instances=jukebox-161404:us-east1:dev=tcp:3306",
                     "-credential_file=/secrets/cloudsql/credentials.json"]
           volumeMounts:
-            - name: cloudsql-oauth-credentials
+            - name: cloudsql-instance-credentials
               mountPath: /secrets/cloudsql
               readOnly: true
             - name: ssl-certs
@@ -42,9 +47,9 @@ spec:
       # [END containers]
       # [START volumes]
       volumes:
-        - name: cloudsql-oauth-credentials
+        - name: cloudsql-instance-credentials
           secret:
-            secretName: cloudsql-oauth-credentials
+            secretName: cloudsql-instance-credentials
         - name: ssl-certs
           hostPath:
             path: /etc/ssl/certs

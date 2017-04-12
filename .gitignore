@@ -1,9 +1,18 @@
 *.tgz
 *.log
 *.swp
+*.pyc
+*pb2*
 *node_modules*
 */protos
+*/*/protos
 *debug.log
 
 # Ignore compiled *.css
 fe/src/static/stylesheets/*
+
+# Ignore Kubernetes options
+k8/options
+
+# Ignore secret kubernetes files
+k8/*/*secret*

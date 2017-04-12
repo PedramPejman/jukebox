@@ -1,0 +1,30 @@
+# Deprecated - may be useful for setting up internal Jenkins server
+
+node {
+  def project = 'REPLACE_WITH_YOUR_PROJECT_ID'
+  def author = 'pedrampejman'
+
+  def appName = 'jb-app'
+  def appImageTag = "${author}/${appName}:latest"
+
+  def dockerUser = "${env.DOCKER_USERNAME}"
+  def dockerPass = "${env.DOCKER_PASSWORD}"
+
+  checkout scm
+
+  stage 'Build image'
+  sh("docker login -u ${dockerUser} -p ${dockerPass}")
+  sh("docker build -t ${appImageTag} ./app/")
+
+  stage 'Push image to registry'
+  sh("docker push ${appImageTag}")
+
+  stage "Deploy Application"
+  switch (env.BRANCH_NAME) {
+
+    // Roll out to production
+    case "master":
+        sh("kubectl apply -f k8/app/jb-app.yaml")
+        break
+  }
+}

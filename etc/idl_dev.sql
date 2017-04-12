@@ -1,5 +1,5 @@
 -- Create the development database
-CREATE DATABASE jb_dev;
+CREATE DATABASE IF NOT EXISTS jb_dev;
 
 --Use development database
 USE jb_dev;
@@ -25,16 +25,17 @@ CREATE TABLE IF NOT EXISTS user (
 | Field            | Type         | Null | Key | Default           | Extra |
 +------------------+--------------+------+-----+-------------------+-------+
 | user_id          | varchar(128) | NO   | PRI | NULL              |       |
-| track_uri        | varchar(128) | NO   |     | NULL              |       |
+| track_uri        | varchar(128) | NO   | PRI | NULL              |       |
 | num_times_seeded | smallint(8)  | YES  |     | 0                 |       |
 | creation_time    | datetime     | YES  |     | CURRENT_TIMESTAMP |       |
 +------------------+--------------+------+-----+-------------------+-------+
 */
 CREATE TABLE IF NOT EXISTS top_track (
-  `user_id` VARCHAR(128) NOT NULL PRIMARY KEY, 
+  `user_id` VARCHAR(128) NOT NULL, 
   `track_uri` VARCHAR(128) NOT NULL,
   `num_times_seeded` SMALLINT(8) DEFAULT 0,
   `creation_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`user_id`, `track_uri`),
   FOREIGN KEY (`user_id`) REFERENCES user(`id`)
     ON DELETE CASCADE);
 
@@ -57,3 +58,13 @@ CREATE TABLE IF NOT EXISTS track_features (
   `energy` FLOAT,
   `tempo` FLOAT,
   `valence` FLOAT); 
+
+/* Create Playlist table
+*/
+CREATE TABLE IF NOT EXISTS playlist (
+  `id` INTEGER PRIMARY KEY AUTO_INCREMENT,
+  `userId` VARCHAR(128) NOT NULL, 
+  `uri` VARCHAR(64) NOT NULL,
+  `creation_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`userId`) REFERENCES user(`id`)
+    ON DELETE CASCADE);

@@ -10,18 +10,59 @@ var handshakeClient = new proto.HandshakeService(HOST + ":" + PORT,
 var appClient = new proto.AppService(HOST + ":" + PORT,
     grpc.credentials.createInsecure());
 
+// Jukebox proto fields
+const SEED_TRACKS = 'seedTracks';
+const AUDIO_FEATURE_PARAMS = 'audioFeatureParams';
+const ACCESS_TOKEN = 'accessToken';
+const USER_ID = 'userId';
+const PLAYLIST_ID = 'playlistId';
+const PLAYLIST_URI = 'playlistUri';
+
 /*
  * Stub for the GetInitialJukeboxState RPC call
  */
-function getInitialJukeboxState(accessToken, callback) {
-  appClient.getInitialJukeboxState({access_token: accessToken}, callback);
+function getInitialJukeboxState(accessToken, userId, callback) {
+  authCreds = {
+    [ACCESS_TOKEN] : accessToken, 
+    [USER_ID] : userId
+  };
+
+  appClient.getInitialJukeboxState(authCreds, callback);
 }
 
 /*
  * Stub for the RegisterUser RPC call
  */
 function registerUser(accessToken, callback) {
-  appClient.registerUser({access_token: accessToken}, callback);
+  authCreds = {
+    [ACCESS_TOKEN] : accessToken
+  };
+
+  appClient.registerUser(authCreds, callback);
+}
+
+/*
+ * Stub for the GenerateJukebox RPC call
+ */
+function generateJukebox(accessToken, userId, 
+    audioFeatureParams, seedTracks, callback) {
+
+  jukeboxState = {
+    [ACCESS_TOKEN] : accessToken,
+    [USER_ID] : userId,
+    [AUDIO_FEATURE_PARAMS] : audioFeatureParams,
+    [SEED_TRACKS] : seedTracks 
+  };
+
+  appClient.generateJukebox(jukeboxState, callback);
+}
+
+function getPlaylistUri(playlistId, callback) {
+  getPlaylistUriRequest = {
+    [PLAYLIST_ID] : playlistId
+  };
+
+  appClient.getPlaylistUri(getPlaylistUriRequest, callback)
 }
 
 /*
@@ -37,7 +78,9 @@ function shake(user, callback) {
 module.exports = {
   shake: shake,
   getInitialJukeboxState: getInitialJukeboxState,
-  registerUser: registerUser
+  registerUser: registerUser,
+  generateJukebox: generateJukebox,
+  getPlaylistUri: getPlaylistUri
 };
 
 /*
@@ -46,8 +89,9 @@ module.exports = {
 function main() {
   console.log("Contacting " + HOST + ":" + PORT);
 
-  // Set access token for example requests
-  access_token = ''; 
+  // Set access token and user id for example requests
+  var accessToken = '';
+  var userId = '';
   
   // Create template callback
   callback = function(err, resp) {
@@ -55,11 +99,25 @@ function main() {
     else console.log("Call succeeded: " + JSON.stringify(resp));
   };
 
-  // Example usage of registerUser()
-  registerUser(access_token, callback);
+  /*
+   *  Example usage of registerUser()
+   *
+   * registerUser(accessToken, callback);
+   */
 
-  // Example usage of getInitialJukeboxState()
-  getInitialJukeboxState(access_token, callback);
+  /*
+   * Example usage of getInitialJukeboxState()
+   *
+   * getInitialJukeboxState(accessToken, userId, callback);
+   */
+  
+  /*
+   * Example usage of generateJukebox()
+   *
+   * var audioFeatures = {'energy' : .6};
+   * var seedTracks = [{'uri': '6VwBbL8CzPiC4QV66ay7oR'}]; 
+   * generateJukebox(accessToken, userId, audioFeatures, seedTracks, callback);
+   */
 }
 
 if (require.main === module) main();

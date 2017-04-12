@@ -1,0 +1,83 @@
+# Use Dockerized infrastructure
+sudo: false
+
+# Use node_js environnement
+language: node_js
+node_js:
+  - "7.6.0"
+
+# Cache Gcloud SDK between commands
+cache:
+  directories:
+    - "$HOME/google-cloud-sdk/"
+
+# Install services
+services:
+  - docker
+
+# Install python3 packages 
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - python3
+ 
+# Set envrionment variables
+env:
+  global:
+    - GOOGLE_APPLICATION_CREDENTIALS=~/gcloud-service-key.json
+    - AUTHOR=pedrampejman
+    - NODE_ENV=CI
+      # Service directories
+    - APP_DIR=app
+    - FE_DIR=fe
+    - GEN_DIR=gen
+      # Kubernetes configuration
+    - CLOUDSDK_COMPUTE_ZONE=us-east1-d
+    - PROJECT_NAME=jukebox-161404
+    - CLUSTER_NAME_PRD=jukebox-alpha
+      # Image names
+    - APP_IMAGE_NAME=jb-app
+    - FE_IMAGE_NAME=jb-fe
+    - GEN_IMAGE_NAME=jb-gen
+      # Container names
+    - APP_CONTAINER_NAME=jb-app
+    - FE_CONTAINER_NAME=jb-fe
+    - GEN_CONTAINER_NAME=jb-gen
+      # Deployment names
+    - APP_DEPLOYMENT_NAME=jb-app
+    - FE_DEPLOYMENT_NAME=jb-fe
+    - GEN_DEPLOYMENT_NAME=jb-gen
+
+# Build services
+install:
+    # Install grpcio so that we can build protos for Genius
+  - export PATH=$HOME/.local/bin:$PATH
+  - pip3 install -r ${GEN_DIR}/requirements.txt --user `whoami`
+    # Build project-wide dependencies
+  - make build
+    # Build each service individually
+  - docker build -t ${AUTHOR}/${APP_IMAGE_NAME}:$TRAVIS_BUILD_NUMBER -f ${APP_DIR}/Dockerfile ${APP_DIR} 
+  - docker build -t ${AUTHOR}/${FE_IMAGE_NAME}:$TRAVIS_BUILD_NUMBER -f ${FE_DIR}/Dockerfile ${FE_DIR}
+  - docker build -t ${AUTHOR}/${GEN_IMAGE_NAME}:$TRAVIS_BUILD_NUMBER -f ${GEN_DIR}/Dockerfile ${GEN_DIR}
+
+# Run unit tests
+script:
+  - docker run ${AUTHOR}/${APP_IMAGE_NAME}:$TRAVIS_BUILD_NUMBER test
+
+# Set up for deployment
+before_deploy:
+  - if [ ! -d "$HOME/google-cloud-sdk/bin" ]; then rm -rf $HOME/google-cloud-sdk; export CLOUDSDK_CORE_DISABLE_PROMPTS=1; curl https://sdk.cloud.google.com | bash; fi
+  - source /home/travis/google-cloud-sdk/path.bash.inc
+  - gcloud --quiet version
+  - gcloud --quiet components update
+  - gcloud --quiet components update kubectl
+
+# Deploy to production 
+deploy:
+  - provider: script
+    script: etc/deploy.sh
+    skip_cleanup: true
+    on:
+      all_branches: true

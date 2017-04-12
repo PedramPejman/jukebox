@@ -22,7 +22,6 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
       - python3
-      - python3-setuptools # easy_install3
  
 # Set envrionment variables
 env:
@@ -30,7 +29,6 @@ env:
     - GOOGLE_APPLICATION_CREDENTIALS=~/gcloud-service-key.json
     - AUTHOR=pedrampejman
     - NODE_ENV=CI
-    - TAG=latest
       # Service directories
     - APP_DIR=app
     - FE_DIR=fe
@@ -54,20 +52,19 @@ env:
 
 # Build services
 install:
-  - if [[ "`uname`" == "Darwin" ]]; then travis_retry brew install python3; fi
     # Install grpcio so that we can build protos for Genius
   - export PATH=$HOME/.local/bin:$PATH
   - pip3 install -r ${GEN_DIR}/requirements.txt --user `whoami`
     # Build project-wide dependencies
   - make build
     # Build each service individually
-  - docker build -t ${AUTHOR}/${APP_IMAGE_NAME}:$TAG -f ${APP_DIR}/Dockerfile ${APP_DIR} 
-  - docker build -t ${AUTHOR}/${FE_IMAGE_NAME}:$TAG -f ${FE_DIR}/Dockerfile ${FE_DIR}
-  - docker build -t ${AUTHOR}/${GEN_IMAGE_NAME}:$TAG -f ${GEN_DIR}/Dockerfile ${GEN_DIR}
+  - docker build -t ${AUTHOR}/${APP_IMAGE_NAME}:$TRAVIS_BUILD_NUMBER -f ${APP_DIR}/Dockerfile ${APP_DIR} 
+  - docker build -t ${AUTHOR}/${FE_IMAGE_NAME}:$TRAVIS_BUILD_NUMBER -f ${FE_DIR}/Dockerfile ${FE_DIR}
+  - docker build -t ${AUTHOR}/${GEN_IMAGE_NAME}:$TRAVIS_BUILD_NUMBER -f ${GEN_DIR}/Dockerfile ${GEN_DIR}
 
 # Run unit tests
 script:
-  - docker run ${AUTHOR}/${APP_IMAGE_NAME}:$TAG test
+  - docker run ${AUTHOR}/${APP_IMAGE_NAME}:$TRAVIS_BUILD_NUMBER test
 
 # Set up for deployment
 before_deploy:

@@ -18,19 +18,19 @@ echo "Logging to docker as $DOCKER_USERNAME..."
 docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
 
 echo "Pushing Docker images to repository.."
-docker push ${AUTHOR}/${APP_IMAGE_NAME}:$TAG
-docker push ${AUTHOR}/${FE_IMAGE_NAME}:$TAG
-docker push ${AUTHOR}/${GEN_IMAGE_NAME}:$TAG
+docker push ${AUTHOR}/${APP_IMAGE_NAME}:$TRAVIS_BUILD_NUMBER
+docker push ${AUTHOR}/${FE_IMAGE_NAME}:$TRAVIS_BUILD_NUMBER
+docker push ${AUTHOR}/${GEN_IMAGE_NAME}:$TRAVIS_BUILD_NUMBER
 
 kubectl config view
 kubectl config current-context
 
 echo "Deploying container images to kubernetes..."
 kubectl set image deployment/${APP_DEPLOYMENT_NAME} \
-  ${APP_CONTAINER_NAME}=${AUTHOR}/${APP_IMAGE_NAME}:$TAG
+  ${APP_CONTAINER_NAME}=${AUTHOR}/${APP_IMAGE_NAME}:$TRAVIS_BUILD_NUMBER
 kubectl set image deployment/${FE_DEPLOYMENT_NAME} \
-  ${FE_CONTAINER_NAME}=${AUTHOR}/${FE_IMAGE_NAME}:$TAG
+  ${FE_CONTAINER_NAME}=${AUTHOR}/${FE_IMAGE_NAME}:$TRAVIS_BUILD_NUMBER
 kubectl set image deployment/${GEN_DEPLOYMENT_NAME} \
-  ${GEN_CONTAINER_NAME}=${AUTHOR}/${GEN_IMAGE_NAME}:$TAG
+  ${GEN_CONTAINER_NAME}=${AUTHOR}/${GEN_IMAGE_NAME}:$TRAVIS_BUILD_NUMBER
 
 echo "Finished deployment"

@@ -34,26 +34,37 @@ REQUIRED_ATTRIBUTES = [
 AUDIO_FEATURE_ATTRIBUTES = [
         ACOUSTICNESS, ENERGY
     ]
+DERIVED_ATTRIBUTES = [
+        RELATED_ARTISTS, POPULARITY_SIGNAL, 
+        AUDIO_FEATURE_DEVIATION]
 
 INITIAL_ATTRIBUTES = 'initial-attributes'
 NONE = 'none'
 
 # Derived attribute names
 RELATED_ARTISTS = 'related-artists'
-POPULARITY_DEVIATION = 'populatiry-deviation'
+POPULARITY_SIGNAL = 'populatiry-signal'
 AUDIO_FEATURE_DEVIATION = 'audio-feature-deviation'
+MEAN_SEED_TRACK_DEVIATION = 'seed-track-deviation'
+SCORE = 'score'
 
 # Derived attributes parameters
 RELATED_ARTISTS_STRONG = 2
 RELATED_ARTISTS_MEDIUM = 1
 RELATED_ARTISTS_WEAK = 0
-POPULARITY_DEVIATION_LOW = .2
-POPULARITY_DEVIATION_MEDIUM = .4
-POPULARITY_DEVIATION_HIGH = .6
+POPULARITY_SIGNAL_LOW = .2
+POPULARITY_SIGNAL_MEDIUM = .4
+POPULARITY_SIGNAL_HIGH = .6
 POPULARITY_SIGNAL_STRONG = 1
 POPULARITY_SIGNAL_MEDIUM = 0.6
 POPULARITY_SIGNAL_WEAK = 0.4
 POPULARITY_SIGNAL_ZERO = 0
+
+# Regression coefficients
+COEFFICIENT_RELATED_ARTISTS = 1
+COEFFICIENT_POPULARITY_SIGNAL = 1
+COEFFICIENT_AUDIO_FEATURE_DEVIATION = -1 
+COEFFICIENT_SEED_TRACK_DEVIATION = -1
 
 # TODO: Fix style issue (tab->4 spaces)
 def select_best_tracks(potential_tracks, seed_tracks, feature_params):
@@ -187,34 +198,59 @@ def process(df, seed_tracks, related_artists):
             related_artists_values.append(RELATED_ARTISTS_WEAK)
     df[RELATED_ARTISTS] = related_artists_values
 
-    # Compute POPULARITY_DEVIATION attribute
+    # Compute POPULARITY_SIGNAL attribute
     target_popularity = df.loc[INITIAL_ATTRIBUTES, POPULARITY]
     popularity_deviation_values = []
     for row in df[POPULARITY]:
-        deviation = abs(row-target_popularity)
+        deviation = abs(row - target_popularity)
         if (deviation < POPULARITY_DEVIATION_LOW):
             popularity_deviation_values.append(POPULARITY_SIGNAL_STRONG)
-        elif (deviation < POPULARITY_DEVIATION_MEDIUM):
+        elif (deviation < POPULARITY_SIGNAL_MEDIUM):
             popularity_deviation_values.append(POPULARITY_SIGNAL_MEDIUM)
-        elif (deviation < POPULARITY_DEVIATION_HIGH):
+        elif (deviation < POPULARITY_SIGNAL_HIGH):
             popularity_deviation_values.append(POPULARITY_SIGNAL_WEAK)
         else: 
             popularity_deviation_values.append(POPULARITY_SIGNAL_ZERO)
-    df[POPULARITY_DEVIATION] = popularity_deviation_values
+    df[POPULARITY_SIGNAL] = popularity_deviation_values
 
-    # Compute AUDIO_FEATURES_DEVIATION
+    # Compute AUDIO_FEATURE_DEVIATION
     target_features = data.loc[INITIAL_ATTRIBUTES, AUDIO_FEATURE_ATTRIBUTES]
-
     audio_feature_deviations=[]
     for index in df.iterrows():
         row_data = df.loc[index, AUDIO_FEATURE_ATTRIBUTES]
-        audio_feature_deviations.append((np.linalg.norm(row_data - user_requested_audio_features)))
+        audio_feature_deviations.append(
+                (np.linalg.norm(row_data - user_requested_audio_features)))
     df[AUDIO_FEATURE_DEVIATION] = audio_feature_deviations
     
+    # Extract mean seedtrack values
+    seed_track_uris = [track[URI] for track in seed_tracks]
+    mean_seedtrack_values = df.loc[df[URI].isin(seed_track_uris)].mean(numeric_only=True)
+
+    # Compute MEAN_SEED_TRACKS_DEVIATION
+    distance_to_mean_seedtracks=[]
+    for index in df.iterrows():
+        row_data = df.loc[index, REQUIRED_ATTRIBUTES]
+        distance_to_mean_seedtracks.append(
+                (np.linalg.norm(row_data - mean_seedtrack_values)))
+    df[MEAN_SEED_TRACKS_DEVIATION] = distance_to_mean_seedtracks
+
+    # Normalize derived attributes
+    for attribute in DERIVED_ATTRIBUTES:
+        df[attribute] = scale(df[attribute])
+
     return df
     
 def select_top_n_tracks(processed_data, n):
-    pass
+    df[SCORE] = COEFFICIENT_RELATED_ARTISTS * df[RELATED_ARTISTS] +
+        COEFFICIENT_POPULARITY_SIGNAL * df[POPULARITY_SIGNAL] +
+        COEFFICIENT_AUDIO_FEATURE_DEVIATION * df[AUDIO_FEATURE_DEVIATION] +
+        COEFFICIENT_SEED_TRACK_DEVIATION * df[MEAN_SEED_TRACKS_DEVIATION] 
+                    
+    # Remove INITIAL_ATTRIBUTES and seed tracks
+    data.loc['mapping_row', 'score'] = -99
+    data.loc[data['name'].isin(seed_track_names), 'score'] = -99
+
+    return (data.nlargest(10, 'score'))
 
 def select_top_tracks():
     raw_data = [

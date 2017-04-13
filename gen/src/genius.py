@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from sklearn.prepocessing import scale
+from sklearn.preprocessing import scale
 from sklearn.preprocessing import Imputer
 
 # Track identifiers
@@ -22,19 +22,38 @@ SPEECHINESS = 'speechiness'
 TEMPO = 'tempo'
 VALENCE = 'valence'
 
-REQUIRED_ATTRIBUTES = [
+'''REQUIRED_ATTRIBUTES = [
         URI, NAME, ALBUM, POPULARITY, ARTIST,
         ACOUSTICNESS, DANCEABILITY, ENERGY,
         INSTRUMENTALNESS, LIVENESS, LOUDNESS,
         SPEECHINESS, TEMPO, VALENCE]
+'''
+REQUIRED_ATTRIBUTES = [
+        URI, POPULARITY, ARTIST, ENERGY, ACOUSTICNESS
+    ]
+AUDIO_FEATURE_ATTRIBUTES = [
+        ACOUSTICNESS, ENERGY
+    ]
+
+INITIAL_ATTRIBUTES = 'initial-attributes'
+NONE = 'none'
 
 # Derived attribute names
 RELATED_ARTISTS = 'related-artists'
+POPULARITY_DEVIATION = 'populatiry-deviation'
+AUDIO_FEATURE_DEVIATION = 'audio-feature-deviation'
 
 # Derived attributes parameters
 RELATED_ARTISTS_STRONG = 2
 RELATED_ARTISTS_MEDIUM = 1
 RELATED_ARTISTS_WEAK = 0
+POPULARITY_DEVIATION_LOW = .2
+POPULARITY_DEVIATION_MEDIUM = .4
+POPULARITY_DEVIATION_HIGH = .6
+POPULARITY_SIGNAL_STRONG = 1
+POPULARITY_SIGNAL_MEDIUM = 0.6
+POPULARITY_SIGNAL_WEAK = 0.4
+POPULARITY_SIGNAL_ZERO = 0
 
 # TODO: Fix style issue (tab->4 spaces)
 def select_best_tracks(potential_tracks, seed_tracks, feature_params):
@@ -129,28 +148,35 @@ def create_data_frame(raw_data):
     return pd.DataFrame(data=raw_data, columns=REQUIRED_ATTRIBUTES)
 
 def pre_process(cleaned_df, initial_attributes):
-    ''' Returns DataFrame object with normalized attributes '''
-    target_df = pd.DataFrame(initial_attributes, [0], columns=REQUIRED_ATTRIBUTES)
-    df = cleaned_df.append(target_df, ignore_index=True)
+    ''' Returns DataFrame object with normalized attributes. Also
+    appends the initial attributes to the dataframe for uniform normalization.'''
 
-    # Impute missing values
-    imp = Imputer(
+    # Append initial attributes
+    initial_attr_row = pd.Series(initial_attributes, 
+        index=cleaned_df.columns, name=INITIAL_ATTRIBUTES)
+    initial_attr_row = initial_attr_row.fillna(value=NONE)
+    df = cleaned_df.append(initial_attr_row)
 
-    # Scale data to have zero mean and unit variance
+    # Drop rows with missing data
+    df = df.dropna(how='any')
+
+    # Raise error if there are no tracks left
+    if (df.size == 0):
+        raise ValueError("Cannot normalize empty dataframe")
+
+    # Normalize data to have zero mean and unit variance
     for column in df.columns:
-        if (df[column].dtype == np.float64 or df[column].dtype == np.int64) and df[column]:
-            print(column, end=" ")
-            print(df[column])
-            df[column] = preprocessing.scale(df[column])
+        if (df[column].dtype == np.float64 or df[column].dtype == np.int64):
+            df[column] = scale(df[column])
 
     return df
     
 def process(df, seed_tracks, related_artists):
     
-    
     # Compute set of artsts
     artists = set([track[ARTIST] for track in seed_tracks])
     
+    # Compute RELATED_ARTISTS attribute
     related_artists_values = []
     for row in df[ARTIST]:
         if row in artists:
@@ -159,48 +185,81 @@ def process(df, seed_tracks, related_artists):
             related_artists_values.append(RELATED_ARTISTS_MEDIUM)
         else:
             related_artists_values.append(RELATED_ARTISTS_WEAK)
-
     df[RELATED_ARTISTS] = related_artists_values
-    print(artists)
-    print(df)
 
+    # Compute POPULARITY_DEVIATION attribute
+    target_popularity = df.loc[INITIAL_ATTRIBUTES, POPULARITY]
+    popularity_deviation_values = []
+    for row in df[POPULARITY]:
+        deviation = abs(row-target_popularity)
+        if (deviation < POPULARITY_DEVIATION_LOW):
+            popularity_deviation_values.append(POPULARITY_SIGNAL_STRONG)
+        elif (deviation < POPULARITY_DEVIATION_MEDIUM):
+            popularity_deviation_values.append(POPULARITY_SIGNAL_MEDIUM)
+        elif (deviation < POPULARITY_DEVIATION_HIGH):
+            popularity_deviation_values.append(POPULARITY_SIGNAL_WEAK)
+        else: 
+            popularity_deviation_values.append(POPULARITY_SIGNAL_ZERO)
+    df[POPULARITY_DEVIATION] = popularity_deviation_values
+
+    # Compute AUDIO_FEATURES_DEVIATION
+    target_features = data.loc[INITIAL_ATTRIBUTES, AUDIO_FEATURE_ATTRIBUTES]
+
+    audio_feature_deviations=[]
+    for index in df.iterrows():
+        row_data = df.loc[index, AUDIO_FEATURE_ATTRIBUTES]
+        audio_feature_deviations.append((np.linalg.norm(row_data - user_requested_audio_features)))
+    df[AUDIO_FEATURE_DEVIATION] = audio_feature_deviations
+    
+    return df
+    
 def select_top_n_tracks(processed_data, n):
     pass
 
 def select_top_tracks():
     raw_data = [
         {
+            URI : 'uri10',
             ARTIST : 'artist3',
             ACOUSTICNESS : .6,
             ENERGY : .6,
+            POPULARITY : 30,
             'unwanted' : .7
         },
         {
+            URI : 'uri11',
             ARTIST : 'artist1',
             ACOUSTICNESS: .8,
-            ENERGY : .7
+            ENERGY : .7,
+            POPULARITY : 80,
         }]
     initial_attributes = {
             ACOUSTICNESS: .1,
+            POPULARITY : 20,
             ENERGY: .9
         }
     seed_tracks = [
         {
             URI : 'uri1',
             ARTIST: 'artist1',
-            ENERGY : .4
+            ACOUSTICNESS : .3,
+            ENERGY : .4,
+            POPULARITY : 50,
         },
         {
             URI : 'uri2',
             ARTIST : 'artist2',
-            ENERGY : .6
+            ACOUSTICNESS : .3,
+            ENERGY : .6,
+            POPULARITY : 20,
         }]
     related_artists = ['artist1']
     n = 10
 
     cleaned_df = create_data_frame(raw_data)
     preprocessed_df = pre_process(cleaned_df, initial_attributes)
-    processed_data = process(cleaned_df, seed_tracks, related_artists)
+    print(preprocessed_df)
+    processed_data = process(preprocessed_df, seed_tracks, related_artists)
     selected_tracks = select_top_n_tracks(processed_data, n)
 
 def main():

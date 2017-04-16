@@ -225,6 +225,7 @@ function fatal(message) {
  * Called in auth-callback
  * Creates the options for access token GET request
  */
+<<<<<<< Updated upstream
 function buildOptionsForAccessTokenRequest(code) {
   var grantType = 'authorization_code';
   var redirectUri = FE_HTTP_HOST + '/auth-callback';
@@ -240,6 +241,35 @@ function buildOptionsForAccessTokenRequest(code) {
       redirect_uri : encodeURIComponent(redirectUri),
       client_id : CLIENT_ID,
       client_secret : CLIENT_SECRET
+=======
+function getAccessCodeCallback(res, error, response, body) {
+      if (!error && response.statusCode == 200) {
+
+        // Retrieve access token
+        accessToken = body.access_token; 
+
+        // Make RPC to obtain initial Jukebox state
+        // TODO: Make more readable by using templated error routines
+        appClient.getInitialJukeboxState(accessToken, function(err, resp) {
+          if (err) { 
+            res.send(err);
+            console.log(err);
+          } else {
+            res.send(resp);
+            console.log(resp);
+          }
+        });
+      } else {
+        // Echo error back appropriately
+        if (error) {
+          console.log(error);
+          res.end("Error: " + error);
+        } else {
+          console.log(response);
+          res.end("Request did not receive 200");
+        }
+      }
+>>>>>>> Stashed changes
     }
   };
 }

@@ -17,9 +17,14 @@ const SEED_TRACK_NAME = 'name';
 const SEED_TRACK_URI = 'uri';
 const SEED_TRACK_IMAGE = 'image';
 
+// JukeboxParams Fields
+const JB_PARAM_POPULARITY = 'popularity';
+const JB_PARAM_NOVELTY = 'novelty';
+
 // Jukebox proto fields
 const SEED_TRACKS = 'seedTracks';
 const AUDIO_FEATURE_PARAMS = 'audioFeatureParams';
+const JUKEBOX_PARAMS = 'jukeboxParams';
 const ACCESS_TOKEN = 'accessToken';
 const USER_ID = 'userId';
 const PLAYLIST_ID = 'playlistId';
@@ -48,10 +53,11 @@ function init() {
 function getInitialJukeboxState(accessToken, userId) {
 
   // Return values
-  var seedTracks, defaultParams;
+  var seedTracks, defaultParams, topTracksObj;
 
   // Gets seed tracks and raw AudioFeatures object
-  var getSeedsAndFeatures = function(topTracksObj) {
+  var getSeedsAndFeatures = function(_topTracksObj) {
+    topTracksObj = _topTracksObj;
     seedTracks = pruneTracks(topTracksObj.body.items);
     tracksIds = extractTracksIds(topTracksObj);
     return spotify.getAudioFeatures(accessToken, tracksIds)
@@ -60,10 +66,14 @@ function getInitialJukeboxState(accessToken, userId) {
   // Records top track and returns InitJBState
   var recordAndGetInitState = function(topTracksFeatures) {
     return recordTopTracks(accessToken, topTracksFeatures).then(function() {
-      defaultParams = getDefaultJukeboxParams(topTracksFeatures);
+      
+      featureParams = getInitAudioFeatureParams(topTracksFeatures);
+      jukeboxParams = getInitJukeboxParams(topTracksObj.body.items);
+
       return {
         [SEED_TRACKS] : seedTracks,
-        [AUDIO_FEATURE_PARAMS] : defaultParams,
+        [AUDIO_FEATURE_PARAMS] : featureParams,
+        [JUKEBOX_PARAMS] : jukeboxParams,
         [ACCESS_TOKEN] : accessToken,
         [USER_ID] : userId
       };
@@ -168,9 +178,9 @@ function extractTracksIds(topTracksObj) {
 }
 
 /*
- * Returns default Jukebox parameters
+ * Returns default audio feature parameters
  */
-function getDefaultJukeboxParams(tracksFeatures) {
+function getInitAudioFeatureParams(tracksFeatures) {
   features = {
     [AUDIO_FEATURE_ACOUSTICNESS] : 0,
     [AUDIO_FEATURE_DANCEABILITY] : 0,
@@ -194,6 +204,24 @@ function getDefaultJukeboxParams(tracksFeatures) {
   });
 
   return features;
+}
+
+/*
+ * Returns a partial JukeboxParams object
+ */
+function getInitJukeboxParams(tracks) {
+  popularity = 0;
+  numTracks = tracks.length;
+
+  tracks.forEach(function(track) {
+    popularity += track[JB_PARAM_POPULARITY]
+  });
+
+  popularity = Math.round(100 * popularity / numTracks) / 100;
+
+  return {
+    [JB_PARAM_POPULARITY] : popularity
+  };
 }
 
 /*

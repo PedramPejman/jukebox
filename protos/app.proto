@@ -48,8 +48,9 @@ message AuthCreds {
 message JukeboxState {
   repeated SeedTrack seedTracks = 1;
   AudioFeatureParams audioFeatureParams = 2; 
-  string accessToken = 3;
-  string userId = 4;
+  JukeboxParams jukeboxParams = 3;
+  string accessToken = 4;
+  string userId = 5;
 }
 
 /*
@@ -72,6 +73,14 @@ message AudioFeatureParams {
   float energy = 3;
   float tempo = 4;
   float valence = 5; 
+}
+
+/*
+ * Represents Jukebox tunable parameters 
+ */
+message JukeboxParams {
+  float popularity = 1;
+  float novelty = 2;
 }
 
 /*

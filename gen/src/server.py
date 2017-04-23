@@ -13,7 +13,7 @@ import protos.genius_pb2 as genius
 import protos.genius_pb2_grpc as genius_grpc
 
 ONE_DAY = 60 * 60 * 24
-GEN_RPC_PORT = os.getenv('GEN_RPC_PORT', '35000')
+GEN_RPC_PORT = os.getenv('JB_GEN_SERVICE_PORT', '35000')
 
 class Handshake(genius_grpc.HandshakeServicer):
     """ Implementation of Handshake RPC server """

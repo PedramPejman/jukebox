@@ -1,7 +1,7 @@
 var PROTO_PATH = __dirname + '/../protos/genius.proto';
 
-var HOST = process.env.GEN_RPC_HOST || 'localhost';
-var PORT = process.env.GEN_RPC_PORT || '35000';
+var HOST = process.env.JB_GEN_SERVICE_HOST || 'localhost';
+var PORT = process.env.JB_GEN_SERVICE_PORT || '35000';
 
 var grpc = require('grpc');
 var proto = grpc.load(PROTO_PATH).genius;

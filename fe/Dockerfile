@@ -11,13 +11,8 @@ COPY . /usr/jukebox/fe
 # Install app dependencies
 RUN npm install
 
-# Set environment variables
+# The port that FE container should listen on
 ENV FE_HTTP_PORT 8080
-ENV APP_RPC_PORT 34000 
-
-# Use DNS for discovery for non-dev environments
-RUN if [[ "$ENV" != "dev" ]]; then export APP_RPC_HOST=jb-app; fi
-RUN if [[ "$ENV" != "dev" ]]; then export GEN_RPC_HOST=jb-app; fi
 
 # TODO: THIS NEEDS TO BE MOVED TO KB SECRETS
 ENV CLIENT_SECRET bf1237ed525746b5bde998ec320c2a0f

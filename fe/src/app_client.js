@@ -1,7 +1,7 @@
 var PROTO_PATH = __dirname + '/../protos/app.proto';
 
-var HOST = process.env.APP_RPC_HOST || 'localhost';
-var PORT = process.env.APP_RPC_PORT || '34000';
+var HOST = process.env.JB_APP_SERVICE_HOST || 'localhost';
+var PORT = process.env.JB_APP_SERVICE_PORT || '34000';
 
 var grpc = require('grpc');
 var proto = grpc.load(PROTO_PATH).app;

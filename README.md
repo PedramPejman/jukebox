@@ -19,7 +19,7 @@ This application is divided into four different services:
 
 
 ## Continuous Deployment
-The Jukebox project adheres to principles of continuous deployment. All successful merges into the *master branch* are automatically pushed to [the staging envrionment](staging.jukebox.life) and merges into *production branch* automatically pushed to [the production environment](jukebox.life). Support for canarying will be added when the beta is released and a fully automated A/B test pipeline is imperative.
+The Jukebox project adheres to principles of continuous deployment. All successful merges into the *master branch* are automatically pushed to [the staging envrionment](http://staging.jukebox.life) and merges into *production branch* automatically pushed to [the production environment](http://jukebox.life). Support for canarying will be added when the beta is released and a fully automated A/B test pipeline is imperative.
 
 Jukebox is currently in alpha, hosted on a Google Container Engine cluster; here are the addresses for the live production services and what ports they expect what type of traffic on:
 
@@ -37,7 +37,29 @@ Jukebox is currently in alpha, hosted on a Google Container Engine cluster; here
 Although it's pretty intuitive, let's go over the installation process for each service. On a high level, there are two types of installations: single-service and multi-service. By this, I mean you may either want to run a single service locally (for example FE) or run multiple services locally on your machine (for example FE and APP). You can accomplish either objective with or without Docker, so let's go over it.
 
 ### With Docker
-TODO: Need to amend Dockerfile to add DNS record for jb-app so that it works outside Kubernetes
+In order to run all services locally, you can use the following commands:
+
+```{r, engine='bash', count_lines}
+# Clone the repo
+git clone https://github.com/pedrampejman/jukebox.git
+
+# Build protos for FE and APP
+cd jukebox
+make build-fe && make build-app
+
+# Run the FE container
+docker run --rm -it --net=host -v $(pwd)/fe/src:/usr/jukebox/fe/src pedrampejman/jb-fe
+
+# Run the APP container
+docker run --rm -it --net=host -v $(pwd)/app/src:/usr/jukebox/app/src pedrampejman/jb-app
+
+# Run the GEN container
+docker run --rm -it --net=host -v $(pwd)/gen/src:/usr/jukebox/gen/src pedrampejman/jb-gen
+``` 
+
+Notice a number of nuances (if you're not super familiar with Docker magic). First, the ```--rm``` flag conveniently deletes the container once we're done with it. Second, with the ``--network`` option, we're specifying that we'd like to run on the host machine's network stack; meaning, all the network interfaces defined on the host will be accesible to the container (i.e. this will let the container service a visit to localhost:8080 on the host machine). Lastly, with the ```--volume``` option, we're mapping our ```src``` directory to the container's ```src``` directory. Without this, every time you made changes to the source code, you'd have to build the service before running it, which may take up to a couple minutes. With this option, you can make changes locally, and simply run the container with the updated code in seconds, thus greatly speeding up the development cycle.
+
+Now, if you visit http://localhost:8080 on your browser, you should see everything working!
 
 ### Without Docker
 Let's go over setting up Frontend as it is the easiest.

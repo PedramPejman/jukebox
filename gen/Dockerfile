@@ -12,8 +12,6 @@ COPY . /usr/jukebox/gen
 RUN pip install -r requirements.txt
 
 # Set environment variables
-ENV APP_RPC_HOST jb-app
-ENV APP_RPC_PORT 34000
 ENV GEN_RPC_HOST "0.0.0.0"
 ENV GEN_RPC_PORT 35000
 

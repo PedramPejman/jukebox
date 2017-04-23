@@ -2,6 +2,57 @@ syntax = "proto3";
 
 package genius;
 
+/******************** Genius Service Entities *************************/
+
+/*
+ * Genius service exposing computation-heavy RPC calls
+ */
+service Genius {
+
+  /*
+   * Given the credentials of the user, returns a list of seed tracks that 
+   * is likely to span the breadth of the user's taste
+   */
+  rpc GetSeedTracks(GetSeedTracksRequest) returns (GetSeedTracksResponse) {}
+
+}
+
+message GetSeedTracksRequest {
+	AuthCreds authCreds = 1;
+}
+
+message GetSeedTracksResponse {
+	repeated Track seedTracks = 1;
+}
+
+/*
+ * Spotify auth credentials needed for privileged API calls 
+ */ 
+message AuthCreds {
+	string accessToken = 1;
+	string userId = 2;
+}
+
+/*
+ * Represents a single Spotify Track
+ */
+message Track {
+	string id = 1;
+	string name = 2;
+	string album = 3;
+	repeated Artist artists = 4;
+	string imageUri = 5;
+}
+
+/*
+ * Represents a single Spotify Artist
+ */
+message Artist {
+	string id = 1;
+	string name = 2;
+	repeated string genres = 3;
+}
+
 /********************* Handshake Service Entities *********************/
 
 service Handshake {

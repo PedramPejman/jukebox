@@ -9,7 +9,7 @@ def get_top_tracks(access_token, time_range, limit=20):
     return results['items']
   except spotipy.client.SpotifyException as err:
     print("Spotify Error: {0}".format(err))
-    return []
+  return []
 
 def main():
   ''' Shows example usage of routines '''

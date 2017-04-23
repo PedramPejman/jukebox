@@ -1,4 +1,4 @@
-GEN_PROTOS=./gen/src/
+GEN_PROTOS=./gen/src/protos/
 
 # Builds the FE service locally
 build-fe: .FORCE

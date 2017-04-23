@@ -12,6 +12,9 @@ spec:
       containers:
       - image: pedrampejman/jb-fe
         name: jb-fe
+        env:
+          - name: ENVIRONMENT
+            value: "production"
         ports:
         - containerPort: 8080
           name: jb-fe-http

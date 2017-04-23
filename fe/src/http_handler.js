@@ -4,7 +4,7 @@ var appClient = require('./app_client.js'),
 var CLIENT_ID = process.env.CLIENT_ID || 'c99f31ef396d40ffb498f24d1803b17f',
     FE_HTTP_HOST = process.env.FE_HTTP_HOST || 'http://jukebox.life',
     CLIENT_SECRET = process.env.CLIENT_SECRET || fatal("No CLIENT_SECRET"),
-    IS_PROD = process.env.ENVIRONMENT == 'production';
+    ENVIRONMENT = process.env.ENVIRONMENT || 'development';
 
 // HTTP.GET parameters
 const PARAM_ACCESS_TOKEN = 'access_token';
@@ -50,6 +50,7 @@ exports.home = function (req, res) {
       '?response_type=' + responseType +
       '&client_id=' + CLIENT_ID +
       '&scope=' + encodeURIComponent(scopes) +
+      '&state=' + ENVIRONMENT  +
       '&redirect_uri=' + encodeURIComponent(redirectUri));
 };
 
@@ -58,6 +59,14 @@ exports.home = function (req, res) {
  * and returns response to user.
  */
 exports.authCallback = function (req, res) {
+
+  // If in development, send back to localhost
+  if (req.query.state == 'development') {
+    res.redirect('http://localhost:8080/auth-callback' +
+        '?code='+req.query.code);
+    return;
+  }
+
   // Check if authorization code was supplied by Spotify API
   if (req.query.code) {
     // Create GET request options
@@ -69,7 +78,7 @@ exports.authCallback = function (req, res) {
     });
 
   // For development, allow direct receipt of access token
-  } else if (!IS_PROD && req.query.access_token) {
+  } else if (ENVIRONMENT != 'production' && req.query.access_token) {
     registerUserAndRedirectToInit(res, null, res, req.query);
   } else {
     console.log("code was not supplied.");

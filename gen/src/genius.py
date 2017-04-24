@@ -1,4 +1,20 @@
 from genius_helper import *
+from spotify import *
+
+def get_seed_tracks(access_token):
+    ''' Returns potential seed tracks for user given access token '''
+
+    # TODO: Thread these 3 calls
+    st_tracks = get_top_tracks(access_token, 'short_term')
+    mt_tracks = get_top_tracks(access_token, 'medium_term')
+    lt_tracks = get_top_tracks(access_token, 'long_term')
+
+    tracks = []
+    tracks.extend(st_tracks[0:2])
+    tracks.extend(mt_tracks[0:6])
+    tracks.extend(lt_tracks[0:2])
+
+    return tracks
 
 def select_top_tracks(raw_data, initial_attributes, 
     seed_tracks, related_artists, n=NUM_OUTPUT_TRACKS):

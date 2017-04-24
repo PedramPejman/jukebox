@@ -15,48 +15,47 @@ service Genius {
    */
   rpc GetSeedTracks(GetSeedTracksRequest) returns (GetSeedTracksResponse) {}
 
+  /*
+   * Test RPC method
+   */
+  rpc Shake(HandshakeRequest) returns (HandshakeResponse) {}
 }
 
 message GetSeedTracksRequest {
-	AuthCreds authCreds = 1;
+  AuthCreds authCreds = 1;
 }
 
 message GetSeedTracksResponse {
-	repeated Track seedTracks = 1;
+  repeated Track seedTracks = 1;
 }
 
 /*
  * Spotify auth credentials needed for privileged API calls 
  */ 
 message AuthCreds {
-	string accessToken = 1;
-	string userId = 2;
+  string accessToken = 1;
+  string userId = 2;
 }
 
 /*
  * Represents a single Spotify Track
  */
 message Track {
-	string id = 1;
-	string name = 2;
-	string album = 3;
-	repeated Artist artists = 4;
-	string imageUri = 5;
+  string id = 1;
+  string name = 2;
+  string album = 3;
+  repeated Artist artists = 4;
+  string imageUri = 5;
+  int32 popularity = 6;
 }
 
 /*
  * Represents a single Spotify Artist
  */
 message Artist {
-	string id = 1;
-	string name = 2;
-	repeated string genres = 3;
-}
-
-/********************* Handshake Service Entities *********************/
-
-service Handshake {
-  rpc Shake(HandshakeRequest) returns (HandshakeResponse) {}
+  string id = 1;
+  string name = 2;
+  repeated string genres = 3;
 }
 
 message HandshakeRequest {

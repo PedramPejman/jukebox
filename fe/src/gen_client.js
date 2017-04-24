@@ -8,6 +8,10 @@ var proto = grpc.load(PROTO_PATH).genius;
 var genClient = new proto.Genius(HOST + ":" + PORT,
     grpc.credentials.createInsecure());
 
+// Proto fields
+ACCESS_TOKEN = 'accessToken'
+USER_ID = 'userId'
+
 /*
  * Stub for the GetSeedTracks RPC call
  */

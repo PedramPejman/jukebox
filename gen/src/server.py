@@ -47,6 +47,7 @@ class Genius(genius_grpc.GeniusServicer):
               name=track['name'],
               album=track['album']['name'],
               imageUri=track['album']['images'][0]['url'],
+              popularity=track['popularity'],
               artists=artists))
 
         return genius_pb.GetSeedTracksResponse(seedTracks=tracks)

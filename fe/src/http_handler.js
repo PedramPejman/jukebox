@@ -246,7 +246,7 @@ function buildOptionsForAccessTokenRequest(code) {
     form : {
       grant_type : grantType,
       code : code,
-      redirect_uri : encodeURIComponent(redirectUri),
+      redirect_uri : redirectUri,
       client_id : CLIENT_ID,
       client_secret : CLIENT_SECRET
     }

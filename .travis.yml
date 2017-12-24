@@ -34,9 +34,9 @@ env:
     - FE_DIR=fe
     - GEN_DIR=gen
       # Kubernetes configuration
-    - CLOUDSDK_COMPUTE_ZONE=us-east1-d
-    - PROJECT_NAME=jukebox-161404
-    - CLUSTER_NAME_PRD=jukebox-alpha
+    - CLOUDSDK_COMPUTE_ZONE=us-west1-a
+    - PROJECT_NAME=pedram-demo-0
+    - CLUSTER_NAME_PRD=cluster-1
       # Image names
     - APP_IMAGE_NAME=jb-app
     - FE_IMAGE_NAME=jb-fe
@@ -53,14 +53,12 @@ env:
 # Build services
 install:
     # Install grpcio so that we can build protos for Genius
-  - export PATH=$HOME/.local/bin:$PATH
-  - pip3 install -r ${GEN_DIR}/requirements.txt --user `whoami`
-    # Build project-wide dependencies
-  - make build
+    # pip3 install -r ${GEN_DIR}/requirements.txt --user `whoami`
+    # Build protos for FE and APP
+  - make build-fe && make build-app
     # Build each service individually
   - docker build -t ${AUTHOR}/${APP_IMAGE_NAME}:$TRAVIS_BUILD_NUMBER -f ${APP_DIR}/Dockerfile ${APP_DIR} 
   - docker build -t ${AUTHOR}/${FE_IMAGE_NAME}:$TRAVIS_BUILD_NUMBER -f ${FE_DIR}/Dockerfile ${FE_DIR}
-  - docker build -t ${AUTHOR}/${GEN_IMAGE_NAME}:$TRAVIS_BUILD_NUMBER -f ${GEN_DIR}/Dockerfile ${GEN_DIR}
 
 # Run unit tests
 script:

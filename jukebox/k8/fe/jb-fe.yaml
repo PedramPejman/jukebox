@@ -1,0 +1,22 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: jb-fe
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: jb-fe
+    spec:
+      containers:
+      - image: pedrampejman/jb-fe
+        name: jb-fe
+        env:
+          - name: ENVIRONMENT
+            value: "production"
+        ports:
+        - containerPort: 8080
+          name: jb-fe-http
+        - containerPort: 34000
+          name: jb-app-rpc

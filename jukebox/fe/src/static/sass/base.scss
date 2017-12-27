@@ -1,0 +1,99 @@
+/***********************************************
+            DEFAULT STYLES
+***********************************************/
+
+@import url('https://fonts.googleapis.com/css?family=Montserrat');
+$font-stack: 'Montserrat', Helvetica, sans-serif;
+
+$black: #191414;
+$grey:  #C0C0C0;
+$white: #FFFFFF;
+$green: #1DB954;
+
+$title-text-size: 3em;
+$subtitle-text-size: 1em;
+$cta-text-size: 1.5em;
+
+html, body {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: $black;
+  font: 100% $font-stack;
+  font-weight: lighter;
+}
+
+.main-container {
+  width: 100%;
+  height: 100%;
+}
+
+.content {
+  width: 100%;
+  height: 90%;
+}
+
+.title {
+  width: 100%;
+  height: 5%;
+  text-align: center;
+  color: $white;
+  font-size: $title-text-size;
+}
+
+.subtitle {
+  width: 100%;
+  height: 2%;
+  text-align: center;
+  color: $grey;
+  font-size: $subtitle-text-size;
+}
+
+.column {
+  vertical-align: top;
+  text-align: center;
+}
+
+.column input.track-input {
+  float: left;
+}
+
+.column .track-card {
+  width: 80%;
+  height: 50px;
+  text-align: center;
+  display: inline-block;
+}
+
+.column .track-card .track-cover {
+  height: 50px;
+  float: left;
+}
+
+.column .track-card .track-info {
+  font-size: $subtitle-text-size;
+}
+
+.widget, .sliders {
+  width: 50%;
+  height: 100%;
+  display: inline-block;
+  color: $white;
+  text-align: center;
+}
+
+#generate-button {
+  font-size: $cta-text-size;
+  margin: 0 auto;
+  display: block;
+}
+
+@media screen and (orientation: portrait) {
+  .widget, .sliders {
+    width: 100%;
+    height: 50%;
+  }
+}

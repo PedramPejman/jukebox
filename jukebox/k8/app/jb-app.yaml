@@ -1,0 +1,58 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: jb-app
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: jb-app
+    spec:
+      # [START containers]
+      containers:
+        # [START app_container]
+        - image: pedrampejman/jb-app
+          name: jb-app
+          env:
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql-db-credentials
+                  key: username
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: cloudsql-db-credentials
+                  key: password
+          ports:
+            - containerPort: 34000
+              name: jb-app-server
+        # [END app_container]
+        # [START proxy_container]
+        - image: b.gcr.io/cloudsql-docker/gce-proxy:1.05
+          name: cloudsql-proxy
+          command: ["/cloud_sql_proxy", "--dir=/cloudsql",
+                    "-instances=pedram-demo-0:us-west1:dev-0=tcp:3306",
+                    "-credential_file=/secrets/cloudsql/credentials.json"]
+          volumeMounts:
+            - name: cloudsql-instance-credentials
+              mountPath: /secrets/cloudsql
+              readOnly: true
+            - name: ssl-certs
+              mountPath: /etc/ssl/certs
+            - name: cloudsql
+              mountPath: /cloudsql
+        # [END proxy_container]
+      # [END containers]
+      # [START volumes]
+      volumes:
+        - name: cloudsql-instance-credentials
+          secret:
+            secretName: cloudsql-instance-credentials
+        - name: ssl-certs
+          hostPath:
+            path: /etc/ssl/certs
+        - name: cloudsql
+          emptyDir:
+      # [END volumes]

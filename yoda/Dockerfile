@@ -14,9 +14,8 @@ COPY pom.xml /usr/jukebox/yoda
 COPY src /usr/jukebox/yoda/src
 
 # Build/verify mvn project
-RUN ["mvn", "dependency:resolve"]
 RUN ["mvn", "verify"]
 RUN ["mvn", "package"]
 
 # Make default entrypoint run App's main
-ENTRYPOINT ["java", "-cp", "target/yoda-0.1-SNAPSHOT.jar", "life.jukebox.yoda.HandshakeServer"]
+ENTRYPOINT ["mvn", "exec:java", "-Dexec.mainClass=life.jukebox.yoda.YodaGrpcServer"]

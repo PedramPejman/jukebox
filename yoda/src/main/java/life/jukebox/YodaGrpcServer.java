@@ -18,10 +18,10 @@ public class YodaGrpcServer {
     /* The port on which the server should run */
     int port = 37000;
     server = ServerBuilder.forPort(port)
-        .addService(new YodaService())
-        .build()
-        .start();
-    
+      .addService(new YodaService())
+      .build()
+      .start();
+
     logger.info("Server started, listening on " + port);
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -58,12 +58,4 @@ public class YodaGrpcServer {
     server.blockUntilShutdown();
   }
 
-  static class YodaService extends YodaGrpc.YodaImplBase {
-    @Override
-    public void shake(HandshakeRequest req, StreamObserver<HandshakeResponse> responseObserver) {
-      HandshakeResponse reply = HandshakeResponse.newBuilder().setMessage("Hello " + req.getName()).build();
-      responseObserver.onNext(reply);
-      responseObserver.onCompleted();
-    }
-  }
 }

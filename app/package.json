@@ -8,7 +8,8 @@
     "grpc": "^1.0.0",
     "mysql": "^2.13.0",
     "promise": "^7.1.1",
-    "spotify-web-api-node": "2.3.6"
+    "spotify-web-api-node": "2.3.6",
+    "@google-cloud/pubsub": "0.16.1"
   },
   "scripts": {
     "start": "node src/server.js",

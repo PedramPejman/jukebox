@@ -13,5 +13,6 @@ fe/src/static/stylesheets/*
 # Ignore Kubernetes options
 k8/options
 
-# Ignore secret kubernetes files
+# Ignore secret files
 k8/*/*secret*
+*/*-secret.json

@@ -2,11 +2,12 @@
 FROM node:7-onbuild
 
 # Create app directory
-RUN mkdir -p /usr/jukebox/fe
-WORKDIR /usr/jukebox/fe
+ENV FE_ROOT /usr/jukebox/jb-fe
+RUN mkdir -p $FE_ROOT
+WORKDIR $FE_ROOT
 
 # Bundle app resources
-COPY . /usr/jukebox/fe
+COPY . $FE_ROOT
 
 # Install app dependencies
 RUN npm install

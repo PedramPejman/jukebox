@@ -2,11 +2,12 @@
 FROM python:latest
 
 # Create app directory
-RUN mkdir -p /usr/jukebox/gen
-WORKDIR /usr/jukebox/gen
+ENV GEN_ROOT /usr/jukebox/gen
+RUN mkdir -p $GEN_ROOT
+WORKDIR $GEN_ROOT
 
 # Bundle app resources
-COPY . /usr/jukebox/gen
+COPY . $GEN_ROOT
 
 # Install dependencies
 RUN pip install -r requirements.txt

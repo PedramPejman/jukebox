@@ -8,11 +8,11 @@
 *debug.log
 
 # Ignore compiled *.css
-fe/src/static/stylesheets/*
+jb-fe/src/static/stylesheets/*
 
 # Ignore Kubernetes options
-k8/options
+k8s/options
 
 # Ignore secret files
-k8/*/*secret*
+k8s/*/*secret*
 */*-secret.json

@@ -22,9 +22,9 @@ env:
     - AUTHOR=pedrampejman
     - NODE_ENV=CI
       # Service directories
-    - APP_DIR=app
-    - FE_DIR=fe
-    - GEN_DIR=gen
+    - APP_DIR=jb-app
+    - FE_DIR=jb-fe
+    - GEN_DIR=jb-gen
       # Kubernetes configuration
     - CLOUDSDK_COMPUTE_ZONE=us-west1-a
     - PROJECT_NAME=pedram-demo-0

@@ -1,8 +1,8 @@
 # Use stable base node image 
 FROM node:7-onbuild
 
-# Create app directory
-ENV APP_ROOT /usr/jukebox/app
+# Create jb-app directory
+ENV APP_ROOT /usr/jukebox/jb-app
 RUN mkdir -p $APP_ROOT
 WORKDIR $APP_ROOT
 

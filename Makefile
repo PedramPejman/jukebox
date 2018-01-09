@@ -1,15 +1,15 @@
-GEN_PROTOS=./gen/src/protos/
+GEN_PROTOS=./jb-gen/src/protos/
 
 # Default entrypoint
 all: build
 
 # Builds protos for Frontend
 build-fe: .FORCE
-	cp -rf protos fe
+	cp -rf protos jb-fe
 
 # Builds protos for Application
 build-app: .FORCE
-	cp -rf protos app
+	cp -rf protos jb-app
 
 # Builds protos for Genius
 build-gen: .FORCE
@@ -18,15 +18,15 @@ build-gen: .FORCE
 
 # Builds protos for Yoda
 build-yoda: .FORCE	
-	cp -rf protos yoda
+	cp -rf protos jb-yoda
 
 # Builds protos for all services
 build: protos
 
-# Builds proto files for app and fe
+# Builds proto files for app, fe and yoda
 # Compiles genius protos and marks it as a python package directory
 protos: .FORCE
-	echo fe app gen yoda | xargs -n 1 cp -rf protos
+	echo fe jb-app jb-gen jb-yoda | xargs -n 1 cp -rf protos
 
 # Creates a Docker network for local integration
 network:

@@ -1,8 +1,6 @@
 # Jukebox
 [![Build Status](https://travis-ci.org/PedramPejman/jukebox.svg?branch=master)](https://travis-ci.org/PedramPejman/jukebox)
 
-*Update (7/24/2017): Because of Google Cloud Platform credit issues, the live Jukebox services (both staging and production environments) have been shut down. I will update this page once a sustainable short-term funding strategy has been devised and the live services are back up and running.*
-
 ## Purpose
 
 This project has two main purposes
@@ -50,13 +48,13 @@ cd jukebox
 make build-fe && make build-app
 
 # Run the FE container
-sudo docker run --rm -it --net=host -v $(pwd)/fe/src:/usr/jukebox/fe/src pedrampejman/jb-fe
+sudo docker run --rm -it --net=host -v $(pwd)/jb-fe/src:/usr/jukebox/jb-fe/src pedrampejman/jb-fe
 
 # Run the APP container
-sudo docker run --rm -it --net=host -v $(pwd)/app/src:/usr/jukebox/app/src pedrampejman/jb-app
+sudo docker run --rm -it --net=host -v $(pwd)/jb-app/src:/usr/jukebox/jb-app/src pedrampejman/jb-app
 
 # Run the GEN container
-sudo docker run --rm -it --net=host -v $(pwd)/gen/src:/usr/jukebox/gen/src pedrampejman/jb-gen
+sudo docker run --rm -it --net=host -v $(pwd)/jb-gen/src:/usr/jukebox/jb-gen/src pedrampejman/jb-gen
 ``` 
 
 Notice a number of nuances (if you're not super familiar with Docker magic). First, the ```--rm``` flag conveniently deletes the container once we're done with it. Second, with the ``--network`` option, we're specifying that we'd like to run on the host machine's network stack; meaning, all the network interfaces defined on the host will be accesible to the container (i.e. this will let the container service a visit to localhost:8080 on the host machine). Lastly, with the ```--volume``` option, we're mapping our ```src``` directory to the container's ```src``` directory. Without this, every time you made changes to the source code, you'd have to build the service before running it, which may take up to a couple minutes. With this option, you can make changes locally, and simply run the container with the updated code in seconds, thus greatly speeding up the development cycle.

@@ -28,4 +28,4 @@ RUN ["mvn", "package"]
 EXPOSE $YODA_RPC_PORT
 
 # Make default entrypoint start Yoda's gRPC server
-ENTRYPOINT ["mvn", "exec:java", "-Dexec.mainClass=life.jukebox.yoda.YodaGrpcServer"]
+ENTRYPOINT ["mvn", "exec:java", "-Dexec.mainClass=life.jukebox.yoda.YodaSubscriberClient"]

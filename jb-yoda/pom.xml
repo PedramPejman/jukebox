@@ -5,6 +5,20 @@
   <artifactId>yoda</artifactId>
   <packaging>jar</packaging>
   <version>0.1</version>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-auth</artifactId>
+        <version>1.8.0</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>20.0</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
@@ -31,6 +45,11 @@
       <groupId>kr.motd.maven</groupId>
       <artifactId>os-maven-plugin</artifactId>
       <version>1.5.0.Final</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-pubsub</artifactId>
+      <version>0.32.0-beta</version>
     </dependency>
   </dependencies>
   <build>

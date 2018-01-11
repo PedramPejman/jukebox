@@ -9,7 +9,8 @@ import java.util.logging.Logger;
 public class YodaService extends YodaGrpc.YodaImplBase {
   @Override
   public void shake(HandshakeRequest req, StreamObserver<HandshakeResponse> responseObserver) {
-    HandshakeResponse reply = HandshakeResponse.newBuilder().setMessage("Hello " + req.getName()).build();
+    HandshakeResponse reply = HandshakeResponse.newBuilder()
+      .setMessage("Hello " + req.getName()).build();
     responseObserver.onNext(reply);
     responseObserver.onCompleted();
   }

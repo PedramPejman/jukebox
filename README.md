@@ -3,82 +3,38 @@
 
 ## Purpose
 
-This project has two main purposes
-
-- Act as a playground for the authors, in which they can test and experiment with relatively-new technologies such as kubernetes, docker, grpc, protobuf, etc. under a service-oriented architecture. 
-- Build a dope playlist generator using Spotify's API
+Two phones make a spkear.
 
 ## Architecture Overview
-This application is divided into four different services:
+This application has two components: The Universe and Jukebox. The Universe Service maintains the central state that allows Jukebox instaces to synchronize playback with oneanother.
 
-- Frontend (FE), which acts as the presentation layer and web server
-- Application (APP), which acts as the brain, delegating heavy computation to GEN and supplying FE with content
-- Genius (GEN), which acts as the computation engine, executing all ML routines
-- Knowledge Graph (KG), a Bigtable instance which acts as Genius' persistent layer, tracking information about users' music taste
-- Database (DB), a Mysql database which acts as Application's persistent layer, tracking sensitive and crucial data
+Universe (uni): a collection of python and java functions written to be deployed in a serverless environment. Universe leads the syncronization process when two or more Jukeboxes want to connect. In the future, this may need to become a full-fledged service.
 
+Jukebox (juke): A web-native application that walks users through a simple one-click syncronization step and allows them to form a bond with others around them, becoming a SpeakerGroup. 
 
 ## Continuous Deployment
 The Jukebox project adheres to principles of continuous deployment. All successful merges into the *master branch* are automatically pushed to [the staging envrionment](http://staging.jukebox.life) and merges into *production branch* automatically pushed to [the production environment](http://jukebox.life). Support for canarying will be added when the beta is released and a fully automated A/B test pipeline is imperative.
 
-Jukebox is currently in alpha, hosted on a Google Container Engine cluster; here are the addresses for the live production services and what ports they expect what type of traffic on:
+## Installation for Development
 
+There are currently 2 services to install: uni and juke
 
-| Service         | Service ID           | Protocol | IP              | Port  |
-|:---------------:|:--------------------:|:--------:|:---------------:|------:|
-| Frontend        | jb-fe-prod           | HTTP     | 104.196.62.203  | 80    |
-| Application     | jb-app-prod          | gRPC     | 35.185.41.242   | 34000 |
-| Genius          | jb-gen-prod          | gRPC     | 104.196.209.40  | 35000 |
-| Knowledge Graph | jb-kg-prod           | gRPC     | 104.113.207.32  | 36000 |
-| Database        | jb-sql-dev           | TCP      | 104.196.23.18   | 3306  |
-
-## Installation
-
-Although it's pretty intuitive, let's go over the installation process for each service. On a high level, there are two types of installations: single-service and multi-service. By this, I mean you may either want to run a single service locally (for example FE) or run multiple services locally on your machine (for example FE and APP). You can accomplish either objective with or without Docker, so let's go over it.
-
-### With Docker
-In order to run all services locally, you can use the following commands:
-
-```{r, engine='bash', count_lines}
-# Clone the repo
-git clone https://github.com/pedrampejman/jukebox.git
-
-# Build protos for FE and APP
-cd jukebox
-make build-fe && make build-app
-
-# Run the FE container
-sudo docker run --rm -it --net=host -v $(pwd)/jb-fe/src:/usr/jukebox/jb-fe/src pedrampejman/jb-fe
-
-# Run the APP container
-sudo docker run --rm -it --net=host -v $(pwd)/jb-app/src:/usr/jukebox/jb-app/src pedrampejman/jb-app
-
-# Run the GEN container
-sudo docker run --rm -it --net=host -v $(pwd)/jb-gen/src:/usr/jukebox/jb-gen/src pedrampejman/jb-gen
-``` 
-
-Notice a number of nuances (if you're not super familiar with Docker magic). First, the ```--rm``` flag conveniently deletes the container once we're done with it. Second, with the ``--network`` option, we're specifying that we'd like to run on the host machine's network stack; meaning, all the network interfaces defined on the host will be accesible to the container (i.e. this will let the container service a visit to localhost:8080 on the host machine). Lastly, with the ```--volume``` option, we're mapping our ```src``` directory to the container's ```src``` directory. Without this, every time you made changes to the source code, you'd have to build the service before running it, which may take up to a couple minutes. With this option, you can make changes locally, and simply run the container with the updated code in seconds, thus greatly speeding up the development cycle.
+TODO(pedrampejman): Give Docker installation instructions
 
 Now, if you visit http://localhost:8080 on your browser, you should see everything working!
 
 TODO: add different entrypoints so that each container can have the option to be linked to staging and production.
 
-## Communication Pattern Deep-Dive
-Since this is the first time I have designed a distributed application, I have kept all communication patterns simple. The APP service is also a bit too heavy and should be broken up into more modular services but again, I'm new to this space and wanted to just get my toes wet, while still gaining practice architecting an app following SOA principles. The communication pattern can be best understood through the use of an example. 
+## User Journey
+Let's go over the most prominent user journey. 
 
-TODO: add graphic outlining the communication pattern
+When Albert visits jukebox.life, he gets to either create a jukebox or join a jukebox. 
 
-## Contributions
-To contribute to this project (whether you are one of the original authors or not) do the following.
-- Follow installation instrutions
-- Do all your development on a separate branch (with a descriptive name)
-- Submit a pull request
-- Respond to any comments and make necessary changes
-- Sit back and relax as your code changes the world :)
+If he clicks on create, he's taken to /jukebox-create where he is given an easily communicatable JukeboxId (eg. 2 digit number or a simple, common word) and is directed to /jukebox-play where we either invoke native jukebox application (if exists), or show a web-native page (can be a simple "Install Spotify application to control the Jukebox" message). 
 
-Don't hesitate to reach out to me personally if you'd like to contribute but unsure where to start.
+If he clicks on join a jukebox, he is taken to a form to supply the JukeboxId (and "..or create a Jukebox yourself" underneath). 
 
-## Credits
-Regardless of what Jukebox becomes in the future, it was started as a school project with [Mira Holford](https://www.linkedin.com/in/miraholford/), [Jessica Zimmerman](https://www.linkedin.com/in/jessica-zimmerman-3342b4a2/) and Nathan Nayda. [Hoyle Wang](https://www.linkedin.com/in/hoylewang/) was instrumental in the product definition process and helped shape core aspects of the user experience. 
+When multiple jukeboxes are joined onto the same channel, as soon as the leader plays a song, they all start to copy playback and play the song in unison. This is clearly difficult to pull of because of the difficulty associated with the precision in central control that is required. We can achieve this by allowing the central state-keeper to account for its delay in making events happen on the Jukebox client devices. 
 
-I will do my best to keep this list updated, crediting those who contribute to the project. Jukebox belongs to the opensource community and for as long as I have a say in its direction, will never adopt a monetization strategy whose objective is anything but keeping the project alive.
+As jukebox devices register with a jukebox (identified by a JukeboxId), the server starts to test their latency by conducting timed handshakes and recording when it reaches out, and when the client shakes. It will do this continuously while the Jukebox client screens show "Synchronizing" (and possibly some indicator of signal volatility - the measure that determines whether we have enough data on latency to be able to accurately synchronize behavior across slaves). After volatility of the delays for all joined devices is achieved, the delays have stablized, the use can play a song, up to a second after which that event gets picked up by the secondly request to /jukebox-detect. It's then that a request to /jukebox-schedule is sent and all other /jukebox-detect hitters of that JukeboxId become playback slaves..
+

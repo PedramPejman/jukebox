@@ -12,7 +12,9 @@ exports.getTopTracks = function getTopTracks(accessToken) {
   var options = {'limit': '20', 'time_range': 'short_term'};
 
   // Return top tracks wrapped in a promise
-  return spotifyApi.getMyTopTracks(options);
+  topTracks = spotifyApi.getMyTopTracks(options);
+  console.log(topTracks);
+  return topTracks;
 }
 
 /*

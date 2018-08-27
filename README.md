@@ -1,5 +1,5 @@
 # Jukebox
-[![Build Status](https://travis-ci.org/PedramPejman/jukebox.svg?branch=master)](https://travis-ci.org/PedramPejman/jukebox)
+[![Build Status](https://travis-ci.org/unclepeddy/jukebox.svg?branch=master)](https://travis-ci.org/PedramPejman/jukebox)
 
 ## Purpose
 

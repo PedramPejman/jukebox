@@ -1,5 +1,5 @@
 # Jukebox
-[![Build Status](https://travis-ci.org/unclepeddy/jukebox.svg?branch=master)](https://travis-ci.org/PedramPejman/jukebox)
+[![Build Status](https://travis-ci.org/unclepeddy/jukebox.svg?branch=master)](https://travis-ci.org/unclepeddy/jukebox)
 
 ## Purpose
 
@@ -29,7 +29,6 @@ Jukebox is currently in alpha, hosted on a Google Container Engine cluster; here
 | Frontend        | jb-fe-prod           | HTTP     | 104.196.62.203  | 80    |
 | Application     | jb-app-prod          | gRPC     | 35.185.41.242   | 34000 |
 | Genius          | jb-gen-prod          | gRPC     | 104.196.209.40  | 35000 |
-| Knowledge Graph | jb-kg-prod           | gRPC     | 104.113.207.32  | 36000 |
 | Database        | jb-sql-dev           | TCP      | 104.196.23.18   | 3306  |
 
 ## Installation
@@ -55,7 +54,7 @@ sudo docker run --rm -it --net=host -v $(pwd)/jb-app/src:/usr/jukebox/jb-app/src
 
 # Run the GEN container
 sudo docker run --rm -it --net=host -v $(pwd)/jb-gen/src:/usr/jukebox/jb-gen/src pedrampejman/jb-gen
-``` 
+```
 
 Notice a number of nuances (if you're not super familiar with Docker magic). First, the ```--rm``` flag conveniently deletes the container once we're done with it. Second, with the ``--network`` option, we're specifying that we'd like to run on the host machine's network stack; meaning, all the network interfaces defined on the host will be accesible to the container (i.e. this will let the container service a visit to localhost:8080 on the host machine). Lastly, with the ```--volume``` option, we're mapping our ```src``` directory to the container's ```src``` directory. Without this, every time you made changes to the source code, you'd have to build the service before running it, which may take up to a couple minutes. With this option, you can make changes locally, and simply run the container with the updated code in seconds, thus greatly speeding up the development cycle.
 
@@ -64,7 +63,7 @@ Now, if you visit http://localhost:8080 on your browser, you should see everythi
 TODO: add different entrypoints so that each container can have the option to be linked to staging and production.
 
 ## Communication Pattern Deep-Dive
-Since this is the first time I have designed a distributed application, I have kept all communication patterns simple. The APP service is also a bit too heavy and should be broken up into more modular services but again, I'm new to this space and wanted to just get my toes wet, while still gaining practice architecting an app following SOA principles. The communication pattern can be best understood through the use of an example. 
+Since this is the first time I have designed a distributed application, I have kept all communication patterns simple. The APP service is also a bit too heavy and should be broken up into more modular services but again, I'm new to this space and wanted to just get my toes wet, while still gaining practice architecting an app following SOA principles. The communication pattern can be best understood through the use of an example.
 
 TODO: add graphic outlining the communication pattern
 

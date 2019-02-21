@@ -47,9 +47,8 @@ install:
     # Build protos for all services
   - make build
     # Build each service individually
-  - docker build -t ${AUTHOR}/${APP_IMAGE_NAME}:$TRAVIS_BUILD_NUMBER -f ${APP_DIR}/Dockerfile ${APP_DIR} 
+  - docker build -t ${AUTHOR}/${APP_IMAGE_NAME}:$TRAVIS_BUILD_NUMBER -f ${APP_DIR}/Dockerfile ${APP_DIR}
   - docker build -t ${AUTHOR}/${FE_IMAGE_NAME}:$TRAVIS_BUILD_NUMBER -f ${FE_DIR}/Dockerfile ${FE_DIR}
-  - docker build -t ${AUTHOR}/${GEN_IMAGE_NAME}:$TRAVIS_BUILD_NUMBER -f ${GEN_DIR}/Dockerfile ${GEN_DIR}
 
 # Run unit tests
 script:
@@ -63,7 +62,7 @@ before_deploy:
   - gcloud --quiet components update
   - gcloud --quiet components update kubectl
 
-# Deploy to production 
+# Deploy to production
 deploy:
   - provider: script
     script: etc/deploy.sh
